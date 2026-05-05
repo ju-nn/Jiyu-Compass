@@ -34,6 +34,7 @@ import { ScenarioManagementModal } from './ScenarioManagementModal';
 import { ScenarioComparison } from './ScenarioComparison';
 import { LifeEventSettingsModal } from './LifeEventSettingsModal';
 import { InstallPrompt } from './InstallPrompt';
+import { ConciergeBanner } from './dashboard/ConciergeBanner';
 
 export const Dashboard: React.FC = () => {
     // Dark mode
