@@ -16,14 +16,8 @@ import {
 import { safeGetLocalStorage, safeSetLocalStorage } from './utils/storage';
 import { DiagnosisFlow } from './components/compass/DiagnosisFlow';
 import {
-  CollapsibleSection,
   DiagnosisScopeNote,
-  DetailMetrics,
-  GoalSteps,
-  InvestmentNote,
-  ProjectionChart,
   ResultStory,
-  RpgStatusPanel,
   StartPanel,
 } from './components/compass/ResultSections';
 import { MissionGuide } from './components/compass/WeeklyQuestBoard';
