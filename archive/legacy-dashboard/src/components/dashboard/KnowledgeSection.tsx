@@ -52,7 +52,10 @@ export const KnowledgeSection: React.FC<KnowledgeSectionProps> = (props) => {
                 </TabsContent>
 
                 <TabsContent value="books">
-                    <BooksTab />
+                    <BooksTab
+                        fireCourse={props.fireCourse}
+                        completedLearningCount={props.completedLearningIds.length}
+                    />
                 </TabsContent>
             </Tabs>
         </div>

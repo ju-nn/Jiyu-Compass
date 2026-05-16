@@ -12,22 +12,18 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'ジユウノコンパス - FIRE Lifetime Simulator',
+        name: 'ジユウノコンパス - 生活コンパス診断',
         short_name: 'ジユウノコンパス',
-        description: 'あなたの人生設計とFIRE実現をサポートするシミュレーター',
-        theme_color: '#ffffff',
+        description: '働きすぎない暮らしに近づくために、お金と時間の余力を整理する生活設計ツール',
+        theme_color: '#059669',
         icons: [
           {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
+            src: 'favicon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           }
         ]
       }
@@ -37,29 +33,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks
           'react-vendor': ['react', 'react-dom'],
           'chart-vendor': ['recharts'],
-          'icons-vendor': ['lucide-react'],
-
-          // Feature chunks
-          'dashboard': [
-            './src/components/dashboard/AnalysisTab.tsx',
-            './src/components/dashboard/SimulationTab.tsx',
-            './src/components/dashboard/InputSection.tsx'
-          ],
-          'tools': [
-            './src/components/LatteFactor.tsx',
-            './src/components/WorkStyleSimulator.tsx'
-          ],
-          'learning': [
-            './src/components/dashboard/LearningTab.tsx',
-            './src/data/learningContent.ts'
-          ],
-          'calculations': [
-            './src/utils/calculations.ts',
-            './src/utils/tax.ts'
-          ]
+          'icons-vendor': ['lucide-react']
         }
       }
     },

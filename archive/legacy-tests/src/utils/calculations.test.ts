@@ -21,7 +21,14 @@ const defaultInputs: FireInputs = {
   withdrawalRate: 4,
   pensionStartAge: 65,
   monthlyPension: 150000,
+  monthlyPensionContribution: 0,
   postRetirementIncome: 0,
+  monthlyStudentLoanPayment: 0,
+  studentLoanEndAge: 35,
+  monthlyHousingLoanPayment: 0,
+  housingLoanEndAge: 65,
+  monthlyCarLoanPayment: 0,
+  carLoanEndAge: 35,
   adjustIncomeForInflation: true
 };
 
@@ -102,6 +109,35 @@ describe('simulateAssetGrowth', () => {
     }
   });
 
+  it('40歳以降は介護保険料の概算が支出イベントとして反映される', () => {
+    const result = simulateAssetGrowth(defaultInputs);
+    const age39 = result.find(d => d.age === 39);
+    const age40 = result.find(d => d.age === 40);
+
+    expect(age39?.events?.some(e => e.name === '介護保険料（概算）')).toBeFalsy();
+    expect(age40?.events?.some(e => e.name === '介護保険料（概算）')).toBe(true);
+    expect(age40?.expenses).toBeGreaterThan(age39?.expenses ?? 0);
+  });
+
+  it('資産が尽きた後の赤字は0で止めずマイナス資産として表示できる', () => {
+    const deficitInputs: FireInputs = {
+      ...defaultInputs,
+      currentAge: 30,
+      retirementAge: 30,
+      currentAssets: 0,
+      annualIncome: 0,
+      annualExpenses: 1200000,
+      investmentReturnRate: 0,
+      inflationRate: 0,
+      monthlyPension: 0,
+      postRetirementIncome: 0
+    };
+    const result = simulateAssetGrowth(deficitInputs);
+
+    expect(result[1].assets).toBeLessThan(0);
+    expect(result[1].withdrawal).toBe(1200000);
+  });
+
   it('サイドFIRE収入が反映される', () => {
     const sideFireInputs = { ...defaultInputs, postRetirementIncome: 50000 };
     const result = simulateAssetGrowth(sideFireInputs);
@@ -109,6 +145,48 @@ describe('simulateAssetGrowth', () => {
 
     // 年間60万円 + インフレ分
     expect(retiredData?.income).toBeGreaterThan(0);
+  });
+
+  it('年金保険料を払っている期間は支出に反映される', () => {
+    const inputsWithPensionPayment: FireInputs = {
+      ...defaultInputs,
+      currentAge: 30,
+      retirementAge: 32,
+      inflationRate: 0,
+      monthlyPensionContribution: 20000
+    };
+    const result = simulateAssetGrowth(inputsWithPensionPayment);
+    const age30 = result.find(d => d.age === 30);
+    const age33 = result.find(d => d.age === 33);
+
+    expect(age30?.events?.some(e => e.name === '年金保険料')).toBe(true);
+    expect(age30?.expenses).toBe(defaultInputs.annualExpenses + 240000);
+    expect(age33?.events?.some(e => e.name === '年金保険料')).toBeFalsy();
+  });
+
+  it('奨学金・住宅ローン・車ローンが完済年齢まで支出に反映される', () => {
+    const inputsWithLoans: FireInputs = {
+      ...defaultInputs,
+      currentAge: 30,
+      inflationRate: 0,
+      monthlyStudentLoanPayment: 15000,
+      studentLoanEndAge: 31,
+      monthlyHousingLoanPayment: 90000,
+      housingLoanEndAge: 35,
+      monthlyCarLoanPayment: 25000,
+      carLoanEndAge: 30
+    };
+    const result = simulateAssetGrowth(inputsWithLoans);
+    const age30 = result.find(d => d.age === 30);
+    const age32 = result.find(d => d.age === 32);
+
+    expect(age30?.events?.some(e => e.name === '奨学金返済')).toBe(true);
+    expect(age30?.events?.some(e => e.name === '住宅ローン返済')).toBe(true);
+    expect(age30?.events?.some(e => e.name === '車ローン返済')).toBe(true);
+    expect(age30?.expenses).toBe(defaultInputs.annualExpenses + 1560000);
+    expect(age32?.events?.some(e => e.name === '奨学金返済')).toBeFalsy();
+    expect(age32?.events?.some(e => e.name === '住宅ローン返済')).toBe(true);
+    expect(age32?.events?.some(e => e.name === '車ローン返済')).toBeFalsy();
   });
 
   it('ライフイベント（一時支出）が反映される', () => {
@@ -157,12 +235,12 @@ describe('simulateAssetGrowth', () => {
     for (let age = 40; age < 44; age++) {
       const data = result.find(d => d.age === age);
       expect(data?.events).toBeDefined();
-      expect(data?.events?.[0].name).toBe('教育費');
+      expect(data?.events?.some(e => e.name === '教育費')).toBe(true);
     }
 
-    // 44歳はイベントなし
+    // 44歳は教育費イベントなし
     const dataAfter = result.find(d => d.age === 44);
-    expect(dataAfter?.events).toBeUndefined();
+    expect(dataAfter?.events?.some(e => e.name === '教育費')).toBeFalsy();
   });
 });
 

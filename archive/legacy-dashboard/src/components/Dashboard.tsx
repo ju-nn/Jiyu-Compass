@@ -35,6 +35,7 @@ import { ScenarioComparison } from './ScenarioComparison';
 import { LifeEventSettingsModal } from './LifeEventSettingsModal';
 import { InstallPrompt } from './InstallPrompt';
 import { ConciergeBanner } from './dashboard/ConciergeBanner';
+import { QuestBoard } from './dashboard/QuestBoard';
 
 export const Dashboard: React.FC = () => {
     // Dark mode
@@ -56,7 +57,14 @@ export const Dashboard: React.FC = () => {
             withdrawalRate: 4.0,
             pensionStartAge: 65,
             monthlyPension: 0,
+            monthlyPensionContribution: 0,
             postRetirementIncome: 0,
+            monthlyStudentLoanPayment: 0,
+            studentLoanEndAge: 35,
+            monthlyHousingLoanPayment: 0,
+            housingLoanEndAge: 65,
+            monthlyCarLoanPayment: 0,
+            carLoanEndAge: 35,
             adjustIncomeForInflation: true
         });
     });
@@ -678,6 +686,23 @@ export const Dashboard: React.FC = () => {
                                         completedLearningIds={completedLearningIds}
                                         onLearningComplete={handleLearningComplete}
                                         investmentReturnRate={inputs.investmentReturnRate}
+                                    />
+                                )}
+
+                                {activeTab === 'quest' && (
+                                    <QuestBoard
+                                        assets={inputs.currentAssets}
+                                        savingsRate={inputs.annualIncome > 0 ? ((inputs.annualIncome - inputs.annualExpenses) / inputs.annualIncome) * 100 : 0}
+                                        age={inputs.currentAge}
+                                        yearsToFire={yearsToFire}
+                                        fireNumber={fireNumber}
+                                        income={inputs.annualIncome}
+                                        expenses={inputs.annualExpenses}
+                                        investmentReturn={inputs.investmentReturnRate}
+                                        playerAchievements={playerAchievements}
+                                        playerStats={playerStats}
+                                        fireCourse={fireCourse}
+                                        completedLearningCount={completedLearningIds.length}
                                     />
                                 )}
                             </Suspense>

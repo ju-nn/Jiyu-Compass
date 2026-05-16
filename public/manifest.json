@@ -1,16 +1,16 @@
 {
-  "name": "ジユウノコンパス - FIRE計算機",
-  "short_name": "FIREコンパス",
-  "description": "経済的自立（FIRE）を目指すための総合シミュレーター",
+  "name": "ジユウノコンパス - 生活コンパス診断",
+  "short_name": "生活コンパス",
+  "description": "働きすぎない暮らしに近づくために、お金と時間の余力を整理する生活設計ツール",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
-  "theme_color": "#2563eb",
+  "theme_color": "#059669",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/vite.svg",
-      "sizes": "192x192",
+      "src": "/favicon.svg",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }

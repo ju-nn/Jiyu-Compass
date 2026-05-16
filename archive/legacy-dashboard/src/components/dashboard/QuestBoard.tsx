@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { BarChart2 } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
 import { GameStatus } from '../GameStatus';
+import { BooksTab } from './BooksTab';
+import type { FireCourse } from '../../types';
 
 interface QuestBoardProps {
     assets: number;
@@ -14,6 +16,8 @@ interface QuestBoardProps {
     investmentReturn: number;
     playerAchievements: any;
     playerStats: any;
+    fireCourse: FireCourse | null;
+    completedLearningCount: number;
 }
 
 export const QuestBoard: React.FC<QuestBoardProps> = (props) => {
@@ -51,6 +55,12 @@ export const QuestBoard: React.FC<QuestBoardProps> = (props) => {
                     </Card>
                 </div>
             </div>
+
+            <BooksTab
+                fireCourse={props.fireCourse}
+                completedLearningCount={props.completedLearningCount}
+                compact
+            />
 
             {/* Analytics Dashboard Modal */}
             {showAnalytics && (

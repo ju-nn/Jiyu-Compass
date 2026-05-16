@@ -7,6 +7,7 @@ import {
     CartesianGrid,
     Tooltip,
     Legend,
+    ReferenceLine,
     ResponsiveContainer,
     AreaChart,
     Area
@@ -30,16 +31,24 @@ interface SimulationTabProps {
 }
 
 export const SimulationTab: React.FC<SimulationTabProps> = (props) => {
+    const chartData = props.data.map(point => ({
+        ...point,
+        positiveAssets: point.assets >= 0 ? point.assets : null,
+        negativeAssets: point.assets < 0 ? point.assets : null
+    }));
+
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-4 border border-slate-200 shadow-xl rounded-xl">
                     <p className="font-bold text-slate-800">{label}歳</p>
-                    {payload.map((entry: any, index: number) => (
-                        <p key={index} style={{ color: entry.color }} className="text-sm">
-                            {entry.name}: {formatCurrency(entry.value)}
-                        </p>
-                    ))}
+                    {payload
+                        .filter((entry: any) => entry.value !== null && entry.value !== undefined)
+                        .map((entry: any, index: number) => (
+                            <p key={index} style={{ color: entry.color }} className="text-sm">
+                                {entry.name}: {formatCurrency(entry.value)}
+                            </p>
+                        ))}
                 </div>
             );
         }
@@ -115,20 +124,32 @@ export const SimulationTab: React.FC<SimulationTabProps> = (props) => {
                                 />
                             </AreaChart>
                         ) : (
-                            <LineChart data={props.data}>
+                            <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="age" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 10000}万`} />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
+                                <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
                                 <Line
                                     type="monotone"
-                                    dataKey="assets"
+                                    dataKey="positiveAssets"
                                     name="資産合計"
                                     stroke="#4f46e5"
                                     strokeWidth={3}
                                     dot={false}
                                     activeDot={{ r: 6 }}
+                                    connectNulls={false}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="negativeAssets"
+                                    name="赤字残高"
+                                    stroke="#dc2626"
+                                    strokeWidth={3}
+                                    dot={false}
+                                    activeDot={{ r: 6 }}
+                                    connectNulls={false}
                                 />
                             </LineChart>
                         )}

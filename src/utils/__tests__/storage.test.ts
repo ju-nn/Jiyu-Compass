@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { safeGetLocalStorage, safeSetLocalStorage, safeRemoveLocalStorage } from '../storage';
 
 // Mock localStorage
@@ -40,9 +41,12 @@ describe('Storage utilities', () => {
     });
 
     it('should return default value when JSON parsing fails', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
       localStorage.setItem('invalid', 'invalid json');
       const result = safeGetLocalStorage('invalid', 'default');
       expect(result).toBe('default');
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 

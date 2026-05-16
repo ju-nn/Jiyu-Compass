@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, ModalBody } from './ui/Modal';
 import { Button } from './ui/Button';
 import { ManYenInput } from './ManYenInput';
-import { TrendingUp, ShieldCheck } from 'lucide-react';
+import { CreditCard, TrendingUp, ShieldCheck } from 'lucide-react';
 import type { FireInputs } from '../utils/calculations';
 
 interface SettingsModalProps {
@@ -119,7 +119,73 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     unit="万円"
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-600">支払中の月額年金保険料</label>
+                                <ManYenInput
+                                    label="支払中の月額年金保険料"
+                                    value={inputs.monthlyPensionContribution || 0}
+                                    onChange={(val) => handleInputChange('monthlyPensionContribution', val)}
+                                    unit="万円"
+                                />
+                            </div>
                         </div>
+                        <p className="text-xs text-slate-500">
+                            年金を払っていない場合は保険料を0、将来の受取見込みも0または低めに設定できます。
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 font-bold text-slate-800 border-b pb-2">
+                            <CreditCard className="w-5 h-5 text-amber-500" />
+                            <h3>返済・ローン設定</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <ManYenInput
+                                label="月額奨学金返済"
+                                value={inputs.monthlyStudentLoanPayment || 0}
+                                onChange={(val) => handleInputChange('monthlyStudentLoanPayment', val)}
+                            />
+                            <ManYenInput
+                                label="奨学金完済年齢"
+                                value={inputs.studentLoanEndAge || inputs.currentAge}
+                                onChange={(val) => handleInputChange('studentLoanEndAge', val)}
+                                unit="歳"
+                                step={1}
+                                min={inputs.currentAge}
+                                max={100}
+                            />
+                            <ManYenInput
+                                label="月額住宅ローン"
+                                value={inputs.monthlyHousingLoanPayment || 0}
+                                onChange={(val) => handleInputChange('monthlyHousingLoanPayment', val)}
+                            />
+                            <ManYenInput
+                                label="住宅ローン完済年齢"
+                                value={inputs.housingLoanEndAge || inputs.currentAge}
+                                onChange={(val) => handleInputChange('housingLoanEndAge', val)}
+                                unit="歳"
+                                step={1}
+                                min={inputs.currentAge}
+                                max={100}
+                            />
+                            <ManYenInput
+                                label="月額車ローン"
+                                value={inputs.monthlyCarLoanPayment || 0}
+                                onChange={(val) => handleInputChange('monthlyCarLoanPayment', val)}
+                            />
+                            <ManYenInput
+                                label="車ローン完済年齢"
+                                value={inputs.carLoanEndAge || inputs.currentAge}
+                                onChange={(val) => handleInputChange('carLoanEndAge', val)}
+                                unit="歳"
+                                step={1}
+                                min={inputs.currentAge}
+                                max={100}
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500">
+                            返済がない項目は月額0のままで大丈夫です。返済中だけ毎年の支出に加算されます。
+                        </p>
                     </div>
 
                     <div className="pt-4 border-t space-y-3">

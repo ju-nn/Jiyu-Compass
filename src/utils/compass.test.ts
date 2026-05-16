@@ -23,7 +23,7 @@ describe('evaluateCompass', () => {
 
     expect(result.stabilityStatus).toBe('deficit');
     expect(result.monthlyBalance).toBe(-40000);
-    expect(result.headline).toContain('赤字脱出');
+    expect(result.headline).toContain('赤字を止める');
     expect(result.missions[0].id).toBe('close-deficit');
   });
 
@@ -56,7 +56,7 @@ describe('evaluateCompass', () => {
     expect(result.monthlyBalance).toBe(0);
     expect(result.fireNumber).toBe(0);
     expect(result.recommendedQuests.length).toBeGreaterThan(0);
-    expect(result.rpgStatus.level).toBeGreaterThan(0);
+    expect(result.lifeStage.level).toBeGreaterThan(0);
   });
 
   it('月1万円余力の段階ゴールを計算する', () => {
@@ -95,7 +95,7 @@ describe('evaluateCompass', () => {
     expect(sixMonths?.targetAmount).toBe(900000);
   });
 
-  it('年間支出300万円、取り崩し率4%ならFIRE目標額7500万円', () => {
+  it('年間支出300万円、取り崩し率4%ならFIRE目標額は7500万円', () => {
     const result = evaluateCompass({
       ...defaultCompassInputs,
       monthlyExpenses: 250000,
@@ -105,7 +105,7 @@ describe('evaluateCompass', () => {
     expect(result.fireNumber).toBe(75000000);
   });
 
-  it('現在資産がFIRE目標以上なら達成年数0', () => {
+  it('現在資産がFIRE目標額以上なら達成年数0', () => {
     const inputs: CompassInputs = {
       ...defaultCompassInputs,
       monthlyIncome: 300000,
@@ -145,7 +145,7 @@ describe('evaluateCompass', () => {
       monthlyExpenses: 200000,
     });
 
-    expect(result.metricInsights.monthlyBuffer.label).toBe('同年代目安より高め');
+    expect(result.metricInsights.monthlyBuffer.label).toBe('同じ年代の目安より高め');
     expect(result.metricInsights.monthlyBuffer.helper).toContain('目安');
   });
 
@@ -169,8 +169,8 @@ describe('evaluateCompass', () => {
 
   it.each([
     [0.5, 'まず1か月分'],
-    [2, '生活防衛3か月まであと少し'],
-    [4, '生活防衛6か月を育成中'],
+    [2, '3か月分の貯金まであと少し'],
+    [4, '6か月分の貯金を育てています'],
     [6, 'かなり安心'],
   ])('生活防衛資金%sか月のランクを返す', (months, label) => {
     const result = evaluateCompass({
@@ -196,7 +196,7 @@ describe('evaluateCompass', () => {
 
     expect(result.recommendedQuests[0].id).toBe('close-deficit');
     expect(result.recommendedQuests[0].category).toBe('saving');
-    expect(result.rpgStatus.bossName).toContain('赤字');
+    expect(result.lifeStage.priorityTheme).toContain('赤字');
   });
 
   it('生活防衛資金が少ない場合、投資より防衛クエストが優先される', () => {
@@ -241,11 +241,11 @@ describe('evaluateCompass', () => {
     });
     const userFacingText = [
       result.headline,
-      result.rpgStatus.title,
-      result.rpgStatus.bossName,
-      result.rpgStatus.stageName,
-      result.rpgStatus.shieldLabel,
-      result.rpgStatus.workLightnessLabel,
+      result.lifeStage.title,
+      result.lifeStage.priorityTheme,
+      result.lifeStage.stageName,
+      result.lifeStage.safetyMonthsLabel,
+      result.lifeStage.workLightnessLabel,
       result.story.positionLabel,
       result.story.positionHelper,
       result.story.currentStatusText,
@@ -326,7 +326,7 @@ describe('evaluateCompass', () => {
 
     expect(result.story.assumedMonthlyImprovement).toBe(40000);
     expect(result.story.currentStatusText).toContain('赤字');
-    expect(result.story.improvedFutureText).toContain('月4万円');
+    expect(result.story.improvedFutureText).toContain('月1万円残る形');
     expect(result.story.baselineFutureText).toContain('底');
   });
 
@@ -353,7 +353,21 @@ describe('evaluateCompass', () => {
     });
 
     expect(result.story.positionLabel).toContain('100人の村なら');
-    expect(result.story.positionHelper).toContain('正確な統計ではなく');
+    expect(result.story.positionHelper).toContain('正確な順位ではありません');
+    expect(result.story.positionHelper).toContain('5人きざみ');
+  });
+
+  it('現在地がかなり高い場合は5番目あたりまで出す', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      currentAge: 28,
+      monthlyIncome: 500000,
+      monthlyExpenses: 250000,
+      cashSavings: 4000000,
+      investedAssets: 0,
+    });
+
+    expect(result.story.positionLabel).toBe('100人の村なら上から5番目あたり');
   });
 
   it('40歳前は介護保険料が始まる年齢ポイントを補足する', () => {
@@ -365,6 +379,61 @@ describe('evaluateCompass', () => {
     });
 
     expect(result.story.baselineFutureHelper).toContain('40歳から介護保険料');
+  });
+
+  it('収入と支出が同じでも40歳以降の介護保険料で資産推移が動く', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      currentAge: 38,
+      cashSavings: 100000,
+      investedAssets: 0,
+      monthlyIncome: 200000,
+      monthlyExpenses: 200000,
+      expectedReturnRate: 0,
+    });
+
+    const age39 = result.projection.find((point) => point.age === 39);
+    const age40 = result.projection.find((point) => point.age === 40);
+    const age42 = result.projection.find((point) => point.age === 42);
+
+    expect(age39?.totalAssets).toBe(100000);
+    expect(age40?.totalAssets).toBe(100000);
+    expect(age42?.totalAssets).toBeLessThan(100000);
+  });
+
+  it('60歳以降は自分で払う年金保険料の終了を資産推移に反映する', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      currentAge: 58,
+      cashSavings: 0,
+      investedAssets: 0,
+      monthlyIncome: 200000,
+      monthlyExpenses: 180000,
+      monthlyPensionContribution: 10000,
+      expectedReturnRate: 0,
+    });
+
+    const age60 = result.projection.find((point) => point.age === 60);
+
+    expect(age60?.pensionContributionRelief).toBe(120000);
+    expect(age60?.annualLifeChangeImpact).toBeGreaterThan(0);
+  });
+
+  it('資産が尽きた後の赤字を0で止めず赤字残高として返す', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      currentAge: 30,
+      cashSavings: 0,
+      investedAssets: 0,
+      monthlyIncome: 100000,
+      monthlyExpenses: 150000,
+      expectedReturnRate: 0,
+    });
+
+    const age31 = result.projection.find((point) => point.age === 31);
+
+    expect(age31?.totalAssets).toBeLessThan(0);
+    expect(age31?.deficitBalance).toBeLessThan(0);
   });
 
   it('改善ルートでも生活防衛3か月未満では先に貯金へ配分する', () => {
@@ -407,6 +476,143 @@ describe('evaluateCompass', () => {
       Math.round((result.story.futureInvestedAssets * 0.04) / 12),
     );
     expect(result.story.improvedFutureText).toContain('お金があなたの代わりに');
+  });
+
+  it.each([
+    {
+      name: '毎月赤字',
+      inputs: {
+        monthlyIncome: 140000,
+        monthlyExpenses: 180000,
+        cashSavings: 50000,
+        investedAssets: 0,
+        moneyStress: 'medium',
+      },
+      expected: {
+        status: 'deficit',
+        firstQuest: 'close-deficit',
+        headline: '赤字を止める',
+      },
+    },
+    {
+      name: '月1万円未満の黒字',
+      inputs: {
+        monthlyIncome: 180000,
+        monthlyExpenses: 175000,
+        cashSavings: 50000,
+        investedAssets: 0,
+      },
+      expected: {
+        status: 'fragile',
+        firstQuest: 'first-buffer',
+        headline: '1か月分の貯金',
+      },
+    },
+    {
+      name: '生活防衛済みで投資未経験',
+      inputs: {
+        monthlyIncome: 320000,
+        monthlyExpenses: 200000,
+        cashSavings: 800000,
+        investedAssets: 0,
+        investmentExperience: 'none',
+      },
+      expected: {
+        status: 'steady',
+        firstQuest: 'work-light',
+        headline: '働き方を軽くする',
+      },
+    },
+    {
+      name: 'FIRE直前',
+      inputs: {
+        currentAge: 42,
+        monthlyIncome: 600000,
+        monthlyExpenses: 200000,
+        cashSavings: 1200000,
+        investedAssets: 48800000,
+        workReductionGoal: 'fire',
+        investmentExperience: 'some',
+      },
+      expected: {
+        status: 'steady',
+        firstQuest: 'near-fire-risk-review',
+        headline: 'FIRE目標額が近づいています',
+      },
+    },
+    {
+      name: 'FIRE目標額到達済み',
+      inputs: {
+        currentAge: 45,
+        monthlyIncome: 300000,
+        monthlyExpenses: 200000,
+        cashSavings: 2000000,
+        investedAssets: 60000000,
+        workReductionGoal: 'fire',
+        investmentExperience: 'some',
+      },
+      expected: {
+        status: 'steady',
+        firstQuest: 'withdrawal-plan',
+        headline: 'FIRE目標額には届いています',
+      },
+    },
+  ])('$name の状況に合う優先情報と次の1手を返す', ({ inputs, expected }) => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      ...inputs,
+    } as CompassInputs);
+
+    expect(result.stabilityStatus).toBe(expected.status);
+    expect(result.recommendedQuests[0].id).toBe(expected.firstQuest);
+    expect(result.headline).toContain(expected.headline);
+    expect(result.story.currentStatusText).toBeTruthy();
+    expect(result.story.baselineFutureText).toBeTruthy();
+    expect(result.story.improvedFutureText).toContain('年4%目安');
+  });
+
+  it('ローンや自分で払う社会保険を支出側に含めて、固定負担として見せる', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      monthlyIncome: 300000,
+      monthlyExpenses: 180000,
+      monthlyPensionContribution: 20000,
+      monthlyStudentLoanPayment: 15000,
+      monthlyHousingLoanPayment: 50000,
+      monthlyCarLoanPayment: 10000,
+      cashSavings: 600000,
+      investedAssets: 1000000,
+    });
+
+    expect(result.monthlyObligations).toBe(95000);
+    expect(result.monthlyBalance).toBe(25000);
+    expect(result.annualExpenses).toBe(3300000);
+    expect(result.cashEmergencyFundMonths).toBeCloseTo(600000 / 275000);
+  });
+
+  it('年金の開始年齢と会社員向けの概算を返す', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      monthlyIncome: 250000,
+    });
+
+    expect(result.pensionEstimate.startAge).toBe(65);
+    expect(result.pensionEstimate.monthlyBasicFullAmount).toBe(70608);
+    expect(result.pensionEstimate.monthlyEmployeeExampleAmount).toBe(125418);
+    expect(result.pensionEstimate.helper).toContain('ざっくり確認用');
+    expect(result.pensionEstimate.helper).toContain('ねんきん定期便');
+  });
+
+  it('年金が少なくなりそうな年数を国民年金部分に反映する', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      monthlyIncome: 250000,
+      pensionReducedYears: 10,
+    });
+
+    expect(result.pensionEstimate.monthlyBasicFullAmount).toBe(52956);
+    expect(result.pensionEstimate.monthlyEmployeeExampleAmount).toBe(107766);
+    expect(result.pensionEstimate.helper).toContain('10年');
   });
 });
 

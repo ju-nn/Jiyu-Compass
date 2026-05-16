@@ -4,12 +4,12 @@ import {
 } from './calculations';
 import { getBenchmark } from './benchmarks';
 
-export type WorkReductionGoal = 'stabilize' | 'save' | 'reduce_work' | 'semi_retire' | 'fire';
-export type ExperienceLevel = 'none' | 'starting' | 'some';
+export type WorkReductionGoal = '' | 'stabilize' | 'save' | 'reduce_work' | 'semi_retire' | 'fire';
+export type ExperienceLevel = '' | 'none' | 'starting' | 'some';
 export type StabilityStatus = 'deficit' | 'fragile' | 'building' | 'steady';
 export type DiagnosisStep = 'profile' | 'life' | 'result' | 'quest';
-export type MoneyStressLevel = 'low' | 'medium' | 'high';
-export type WorkPainLevel = 'low' | 'medium' | 'high';
+export type MoneyStressLevel = '' | 'low' | 'medium' | 'high';
+export type WorkPainLevel = '' | 'low' | 'medium' | 'high';
 export type QuestCategory = 'saving' | 'income' | 'defense' | 'investment' | 'work';
 
 export interface CompassInputs {
@@ -20,6 +20,11 @@ export interface CompassInputs {
   currentAssets: number;
   monthlyIncome: number;
   monthlyExpenses: number;
+  monthlyPensionContribution: number;
+  pensionReducedYears: number;
+  monthlyStudentLoanPayment: number;
+  monthlyHousingLoanPayment: number;
+  monthlyCarLoanPayment: number;
   workReductionGoal: WorkReductionGoal;
   savingsExperience: ExperienceLevel;
   investmentExperience: ExperienceLevel;
@@ -33,7 +38,12 @@ export interface ProjectionPoint {
   age: number;
   cashSavings: number;
   investedAssets: number;
+  deficitBalance: number;
   totalAssets: number;
+  longTermCarePremium: number;
+  pensionIncome: number;
+  pensionContributionRelief: number;
+  annualLifeChangeImpact: number;
   /** @deprecated Use totalAssets. */
   assets: number;
   label: string;
@@ -55,7 +65,7 @@ export interface Mission {
   title: string;
   body: string;
   impact: string;
-  difficulty: 'easy' | 'normal' | 'boss';
+  difficulty: 'easy' | 'normal' | 'hard';
   xp: number;
   why: string;
   steps: string[];
@@ -63,13 +73,13 @@ export interface Mission {
   completionChecks: string[];
 }
 
-export interface LifeRpgStatus {
+export interface LifeStageStatus {
   title: string;
   level: number;
   stageName: string;
-  bossName: string;
-  shieldLabel: string;
-  shieldProgress: number;
+  priorityTheme: string;
+  safetyMonthsLabel: string;
+  safetyProgress: number;
   workLightnessLabel: string;
   workLightnessProgress: number;
 }
@@ -77,6 +87,7 @@ export interface LifeRpgStatus {
 export interface CompassResult {
   annualIncome: number;
   annualExpenses: number;
+  monthlyObligations: number;
   annualSavings: number;
   monthlyBalance: number;
   savingsRate: number;
@@ -95,13 +106,43 @@ export interface CompassResult {
   goalSteps: GoalStep[];
   missions: Mission[];
   recommendedQuests: Mission[];
-  rpgStatus: LifeRpgStatus;
+  lifeStage: LifeStageStatus;
   projection: ProjectionPoint[];
   metricInsights: MetricInsights;
+  pensionEstimate: PensionEstimate;
   story: CompassStory;
+  calculationSummary: {
+    monthlyExpenses: number;
+    monthlyObligations: number;
+    effectiveMonthlyExpenses: number;
+    annualExpenses: number;
+    withdrawalRate: number;
+    fireNumber: number;
+    totalAssets: number;
+    remainingToFire: number;
+  };
+  inputSummary: {
+    investmentExperience: ExperienceLevel;
+    workPain: WorkPainLevel;
+  };
+}
+
+export interface PensionEstimate {
+  startAge: number;
+  monthlyBasicFullAmount: number;
+  monthlyEmployeeExampleAmount: number;
+  monthlyBasicLabel: string;
+  monthlyEmployeeExampleLabel: string;
+  helper: string;
 }
 
 export const COMPASS_STORAGE_KEY = 'fireCompass:v1';
+const LONG_TERM_CARE_START_AGE = 40;
+const LONG_TERM_CARE_PREMIUM_RATE = 0.018;
+const PENSION_START_AGE = 65;
+const MONTHLY_BASIC_PENSION_FULL_AMOUNT_2026 = 70608;
+const EMPLOYEE_PENSION_ACCRUAL_RATE = 0.005481;
+const EMPLOYEE_PENSION_FULL_CAREER_MONTHS = 480;
 
 export interface CompassSaveData {
   inputs: CompassInputs;
@@ -147,11 +188,16 @@ export const defaultCompassInputs: CompassInputs = {
   currentAssets: 800000,
   monthlyIncome: 250000,
   monthlyExpenses: 205000,
-  workReductionGoal: 'reduce_work',
-  savingsExperience: 'starting',
-  investmentExperience: 'none',
-  moneyStress: 'medium',
-  workPain: 'high',
+  monthlyPensionContribution: 0,
+  pensionReducedYears: 0,
+  monthlyStudentLoanPayment: 0,
+  monthlyHousingLoanPayment: 0,
+  monthlyCarLoanPayment: 0,
+  workReductionGoal: '',
+  savingsExperience: '',
+  investmentExperience: '',
+  moneyStress: '',
+  workPain: '',
   expectedReturnRate: 4,
   withdrawalRate: 4,
 };
@@ -181,6 +227,16 @@ export const normalizeCompassInputs = (rawInputs: Partial<CompassInputs>): Compa
     currentAssets: cashSavings + investedAssets,
     monthlyIncome: Math.max(0, safeNumber(rawInputs.monthlyIncome ?? defaultCompassInputs.monthlyIncome, 0)),
     monthlyExpenses: Math.max(0, safeNumber(rawInputs.monthlyExpenses ?? defaultCompassInputs.monthlyExpenses, 0)),
+    monthlyPensionContribution: Math.max(0, safeNumber(rawInputs.monthlyPensionContribution ?? defaultCompassInputs.monthlyPensionContribution, 0)),
+    pensionReducedYears: clamp(Math.round(safeNumber(rawInputs.pensionReducedYears ?? defaultCompassInputs.pensionReducedYears, 0)), 0, 40),
+    monthlyStudentLoanPayment: Math.max(0, safeNumber(rawInputs.monthlyStudentLoanPayment ?? defaultCompassInputs.monthlyStudentLoanPayment, 0)),
+    monthlyHousingLoanPayment: Math.max(0, safeNumber(rawInputs.monthlyHousingLoanPayment ?? defaultCompassInputs.monthlyHousingLoanPayment, 0)),
+    monthlyCarLoanPayment: Math.max(0, safeNumber(rawInputs.monthlyCarLoanPayment ?? defaultCompassInputs.monthlyCarLoanPayment, 0)),
+    workReductionGoal: normalizeChoice(rawInputs.workReductionGoal, ['', 'stabilize', 'save', 'reduce_work', 'semi_retire', 'fire']),
+    savingsExperience: normalizeChoice(rawInputs.savingsExperience, ['', 'none', 'starting', 'some']),
+    investmentExperience: normalizeChoice(rawInputs.investmentExperience, ['', 'none', 'starting', 'some']),
+    moneyStress: normalizeChoice(rawInputs.moneyStress, ['', 'low', 'medium', 'high']),
+    workPain: normalizeChoice(rawInputs.workPain, ['', 'low', 'medium', 'high']),
     expectedReturnRate: clamp(safeNumber(rawInputs.expectedReturnRate ?? defaultCompassInputs.expectedReturnRate, 4), -10, 20),
     withdrawalRate: clamp(safeNumber(rawInputs.withdrawalRate ?? defaultCompassInputs.withdrawalRate, 4), 1, 10),
   };
@@ -215,6 +271,17 @@ const safeNumber = (value: number, fallback: number) => {
   return Number.isFinite(value) ? value : fallback;
 };
 
+const normalizeChoice = <T extends string>(value: unknown, allowed: readonly T[]): T => {
+  return allowed.includes(value as T) ? value as T : allowed[0];
+};
+
+const calculateMonthlyObligations = (inputs: CompassInputs) => {
+  return inputs.monthlyPensionContribution
+    + inputs.monthlyStudentLoanPayment
+    + inputs.monthlyHousingLoanPayment
+    + inputs.monthlyCarLoanPayment;
+};
+
 const buildGoal = (
   id: string,
   label: string,
@@ -240,17 +307,19 @@ const buildGoal = (
 export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
   const inputs = normalizeCompassInputs(rawInputs);
   const totalAssets = inputs.cashSavings + inputs.investedAssets;
+  const monthlyObligations = calculateMonthlyObligations(inputs);
+  const effectiveMonthlyExpenses = inputs.monthlyExpenses + monthlyObligations;
 
   const annualIncome = inputs.monthlyIncome * 12;
-  const annualExpenses = inputs.monthlyExpenses * 12;
+  const annualExpenses = effectiveMonthlyExpenses * 12;
   const annualSavings = annualIncome - annualExpenses;
-  const monthlyBalance = inputs.monthlyIncome - inputs.monthlyExpenses;
+  const monthlyBalance = inputs.monthlyIncome - effectiveMonthlyExpenses;
   const savingsRate = inputs.monthlyIncome > 0 ? (monthlyBalance / inputs.monthlyIncome) * 100 : 0;
   const fireNumber = calculateFireNumber(annualExpenses, inputs.withdrawalRate);
   const yearsToFire = calculateYearsToTargetWithSplit(inputs, annualSavings, fireNumber);
   const achievableFireAge = yearsToFire === null ? null : inputs.currentAge + yearsToFire;
-  const cashEmergencyFundMonths = inputs.monthlyExpenses > 0
-    ? inputs.cashSavings / inputs.monthlyExpenses
+  const cashEmergencyFundMonths = effectiveMonthlyExpenses > 0
+    ? inputs.cashSavings / effectiveMonthlyExpenses
     : 12;
   const emergencyFundMonths = cashEmergencyFundMonths;
   const fireProgress = fireNumber > 0 ? clamp((totalAssets / fireNumber) * 100, 0, 100) : 0;
@@ -263,21 +332,21 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
         ? 'building'
         : 'steady';
 
-  const oneMonthFund = inputs.monthlyExpenses;
-  const threeMonthFund = inputs.monthlyExpenses * 3;
-  const sixMonthFund = inputs.monthlyExpenses * 6;
-  const oneDayWorkFreedom = Math.max(inputs.monthlyExpenses * 12 * 0.2, 600000);
+  const oneMonthFund = effectiveMonthlyExpenses;
+  const threeMonthFund = effectiveMonthlyExpenses * 3;
+  const sixMonthFund = effectiveMonthlyExpenses * 6;
+  const oneDayWorkFreedom = Math.max(effectiveMonthlyExpenses * 12 * 0.2, 600000);
   const semiRetireTarget = Math.max(fireNumber * 0.5, threeMonthFund);
 
   const stepsSeed = [
-    ['positive-balance', '赤字脱出', 0, monthlyBalance >= 0 ? 1 : 0, 'まず毎月の流出を止める段階です。'] as const,
+    ['positive-balance', '赤字脱出', 0, monthlyBalance >= 0 ? 1 : 0, 'まず毎月お金が減る流れを止めるところです。'] as const,
     ['monthly-buffer', '月1万円の余力', 10000, Math.max(0, monthlyBalance), '小さな黒字は、働き方を軽くする最初の燃料です。'] as const,
-    ['emergency-1m', '生活防衛資金1か月', oneMonthFund, inputs.cashSavings, '予定外の出費で崩れない土台を作ります。'] as const,
-    ['emergency-3m', '生活防衛資金3か月', threeMonthFund, inputs.cashSavings, '仕事や収入が揺れても考える時間を確保します。'] as const,
+    ['emergency-1m', '急な出費にそなえる貯金1か月', oneMonthFund, inputs.cashSavings, '予定外の出費があっても困りにくい土台を作ります。'] as const,
+    ['emergency-3m', '急な出費にそなえる貯金3か月', threeMonthFund, inputs.cashSavings, '仕事や収入が不安定でも考える時間を作ります。'] as const,
     ['invest-start', '少額投資スタート準備', sixMonthFund, inputs.cashSavings, '守りを固めたら、長期・分散・低コストを学び始めます。'] as const,
-    ['reduce-work', '週1日分の労働を軽くする', oneDayWorkFreedom, totalAssets, '資産と余力で「働き方の選択肢」を増やします。'] as const,
-    ['semi-retire', 'セミリタイア圏', semiRetireTarget, totalAssets, '生活費の一部を資産で支えられる状態です。'] as const,
-    ['fire', 'FIRE圏', fireNumber, totalAssets, '働かない選択も現実に入る最終ステージです。'] as const,
+    ['reduce-work', '週1日分の仕事を軽くする', oneDayWorkFreedom, totalAssets, '資産と余力で、働き方を選びやすくします。'] as const,
+    ['semi-retire', '少し働いて暮らせるライン', semiRetireTarget, totalAssets, '生活費の一部を資産で支えられる状態です。'] as const,
+    ['fire', '働かなくても暮らせるライン', fireNumber, totalAssets, '働かない選び方も現実に入る最後の目標です。'] as const,
   ];
 
   let previousComplete = true;
@@ -288,6 +357,8 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
   });
   const nextGoal = goalSteps.find((step) => step.status === 'active')
     ?? goalSteps[goalSteps.length - 1];
+  const isFireAchieved = fireNumber > 0 && totalAssets >= fireNumber;
+  const isNearFire = !isFireAchieved && fireProgress >= 80;
 
   const missions = buildMissions(inputs, stabilityStatus, monthlyBalance, emergencyFundMonths, nextGoal);
   const recommendedQuests = buildRecommendedQuests(
@@ -297,22 +368,28 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
     emergencyFundMonths,
     nextGoal,
   );
-  const rpgStatus = buildLifeRpgStatus(inputs, stabilityStatus, savingsRate, emergencyFundMonths, nextGoal);
+  const lifeStage = buildLifeStageStatus(inputs, stabilityStatus, savingsRate, emergencyFundMonths, nextGoal);
   const projection = buildProjection(inputs, annualSavings);
   const metricInsights = buildMetricInsights(inputs, monthlyBalance, savingsRate, emergencyFundMonths);
+  const pensionEstimate = buildPensionEstimate(inputs);
   const story = buildCompassStory(inputs, stabilityStatus, monthlyBalance, savingsRate, emergencyFundMonths, projection, recommendedQuests[0]);
 
-  const headline = stabilityStatus === 'deficit'
-    ? '今はFIRE計算より、赤字脱出ミッションが最優先です。'
-    : stabilityStatus === 'fragile'
-      ? 'まず1か月分の守りを作れば、選択肢が増え始めます。'
-      : stabilityStatus === 'building'
-        ? '生活防衛ラインを伸ばしながら、少額投資の準備に入れます。'
-        : '土台はできています。働き方を軽くする次のステージへ進めます。';
+  const headline = isFireAchieved
+    ? 'FIRE目標額には届いています。次は資産の使い方と働き方を決めるところです。'
+    : isNearFire
+      ? 'FIRE目標額が近づいています。無理をしすぎず、守りと資産の使い方を確認するところです。'
+      : stabilityStatus === 'deficit'
+        ? '今はFIRE計算より、赤字を止めることが最優先です。'
+        : stabilityStatus === 'fragile'
+          ? 'まず1か月分の貯金を作れば、選べることが増え始めます。'
+          : stabilityStatus === 'building'
+            ? '急な出費にそなえる貯金を増やしながら、少額投資の準備に入れます。'
+            : '土台はできています。働き方を軽くする次のステージへ進めます。';
 
   return {
     annualIncome,
     annualExpenses,
+    monthlyObligations,
     annualSavings,
     monthlyBalance,
     savingsRate,
@@ -331,10 +408,50 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
     goalSteps,
     missions,
     recommendedQuests,
-    rpgStatus,
+    lifeStage,
     projection,
     metricInsights,
+    pensionEstimate,
     story,
+    calculationSummary: {
+      monthlyExpenses: inputs.monthlyExpenses,
+      monthlyObligations,
+      effectiveMonthlyExpenses,
+      annualExpenses,
+      withdrawalRate: inputs.withdrawalRate,
+      fireNumber,
+      totalAssets,
+      remainingToFire: Math.max(0, fireNumber - totalAssets),
+    },
+    inputSummary: {
+      investmentExperience: inputs.investmentExperience,
+      workPain: inputs.workPain,
+    },
+  };
+};
+
+const buildPensionEstimate = (inputs: CompassInputs): PensionEstimate => {
+  const payableYears = Math.max(0, 40 - inputs.pensionReducedYears);
+  const monthlyBasicAmount = Math.round(
+    MONTHLY_BASIC_PENSION_FULL_AMOUNT_2026 * (payableYears / 40),
+  );
+  const monthlyBasicLabel = formatReadableMoney(monthlyBasicAmount);
+  const estimatedMonthlyEmployeePension = Math.round(
+    monthlyBasicAmount
+    + ((inputs.monthlyIncome * EMPLOYEE_PENSION_ACCRUAL_RATE * EMPLOYEE_PENSION_FULL_CAREER_MONTHS) / 12),
+  );
+  const monthlyEmployeeExampleLabel = formatReadableMoney(estimatedMonthlyEmployeePension);
+  const helper = inputs.pensionReducedYears > 0
+    ? `ざっくり確認用です。年金が少なくなりそうな期間を${inputs.pensionReducedYears}年として入れています。正確な金額は「ねんきん定期便」で確認できます。`
+    : `ざっくり確認用です。実際の金額は、払った期間や給与で変わります。正確な金額は「ねんきん定期便」で確認できます。`;
+
+  return {
+    startAge: PENSION_START_AGE,
+    monthlyBasicFullAmount: monthlyBasicAmount,
+    monthlyEmployeeExampleAmount: estimatedMonthlyEmployeePension,
+    monthlyBasicLabel,
+    monthlyEmployeeExampleLabel,
+    helper,
   };
 };
 
@@ -355,9 +472,6 @@ const buildCompassStory = (
   const improvedPoint = simulateSplitRoute(inputs, improvedAnnualSavings, years);
   const estimatedMonthlyInvestmentGain = Math.round((improvedPoint.investedAssets * 0.04) / 12);
   const positionInsight = buildPositionInsight(inputs, monthlyBalance, savingsRate, emergencyFundMonths);
-  const improvementLabel = assumedMonthlyImprovement > 0
-    ? `月${formatReadableMoney(assumedMonthlyImprovement)}の余力`
-    : '今の余力';
   const monthlyGainLabel = formatReadableMoney(estimatedMonthlyInvestmentGain);
 
   const currentStatusText = status === 'deficit'
@@ -368,7 +482,7 @@ const buildCompassStory = (
         ? '毎月お金は残り始めています。次は、急な出費に耐える貯金を育てたい状態です。'
         : '生活の土台はでき始めています。働き方を少し軽くする準備に入れる状態です。';
 
-  const currentStatusHelper = `${positionInsight.helper} 月の余力 ${formatReadableMoney(monthlyBalance)}、貯蓄率 ${savingsRate.toFixed(1)}%、生活防衛資金 ${emergencyFundMonths.toFixed(1)}か月分です。`;
+  const currentStatusHelper = `月に残るお金は${formatReadableMoney(monthlyBalance)}、貯蓄率は${savingsRate.toFixed(1)}%、急な出費にそなえる貯金は${emergencyFundMonths.toFixed(1)}か月分です。`;
 
   const baselineFutureText = buildBaselineFutureText(
     inputs,
@@ -379,11 +493,15 @@ const buildCompassStory = (
   );
   const baselineFutureHelper = buildLifeChangeHelper(inputs.currentAge);
 
-  const improvedFutureText = `${improvementLabel}を作って続けると、${futureAge}歳ごろには投資資産が約${formatCurrency(improvedPoint.investedAssets)}。年4%目安なら、お金があなたの代わりに毎月約${monthlyGainLabel}ぶん働いてくれる計算です。`;
+  const improvedFutureText = buildImprovedFutureText(
+    monthlyBalance,
+    assumedMonthlyImprovement,
+    futureAge,
+    improvedPoint.investedAssets,
+    monthlyGainLabel,
+  );
 
-  const improvedActionText = firstMission
-    ? `次の1手は「${firstMission.title}」です。ここを終えると、家計を軽くする最初の道筋ができます。`
-    : '次の1手は、月の余力を作ることです。小さくても、毎月残る形を作ります。';
+  const improvedActionText = buildImprovedActionText(firstMission);
 
   return {
     positionLabel: positionInsight.label,
@@ -408,6 +526,43 @@ const buildAssumedMonthlyImprovement = (monthlyBalance: number) => {
   return 0;
 };
 
+const buildImprovedFutureText = (
+  monthlyBalance: number,
+  assumedMonthlyImprovement: number,
+  futureAge: number,
+  investedAssets: number,
+  monthlyGainLabel: string,
+) => {
+  const futureBalance = monthlyBalance + assumedMonthlyImprovement;
+  const futureSummary = `${futureAge}歳ごろには投資資産が約${formatCurrency(investedAssets)}。年4%目安なら、お金があなたの代わりに毎月約${monthlyGainLabel}ぶん働いてくれる計算です。`;
+
+  if (monthlyBalance < 0) {
+    return `まず赤字を止めて、月${formatReadableMoney(Math.max(0, futureBalance))}残る形まで戻せると、${futureSummary}`;
+  }
+
+  if (monthlyBalance < 10000) {
+    return `月${formatReadableMoney(assumedMonthlyImprovement)}上積みして、月1万円残る形にできると、${futureSummary}`;
+  }
+
+  return `今の余力を守って続けると、${futureSummary}`;
+};
+
+const buildImprovedActionText = (firstMission?: Mission) => {
+  if (!firstMission) {
+    return '次の1手は、月の余力を作ることです。小さくても、毎月残る形を作ります。';
+  }
+
+  const categoryText: Record<QuestCategory, string> = {
+    saving: '毎月出ていくお金を少し軽くし、赤字やギリギリ感を減らしやすくなります。',
+    income: '来月も見込める収入の支えを作り、生活の不安定さを減らしやすくなります。',
+    defense: '急な出費に耐える土台を作り、次の判断を落ち着いて選びやすくなります。',
+    investment: '投資や資産の使い方を、生活を壊さない範囲で考えやすくなります。',
+    work: 'お金の余力を、自由時間や働き方の見直しに回す判断がしやすくなります。',
+  };
+
+  return `次の1手は「${firstMission.title}」です。${categoryText[firstMission.category]}`;
+};
+
 const buildPositionInsight = (
   inputs: CompassInputs,
   monthlyBalance: number,
@@ -421,44 +576,19 @@ const buildPositionInsight = (
 
   const savingsScore = monthlyBalance < 0
     ? 1
-    : savingsRate < 10
-      ? 2
-      : savingsRate < 20
-        ? 3
-        : savingsRate < 40
-          ? 4
-          : 5;
-  const defenseScore = emergencyFundMonths < 1
-    ? 1
-    : emergencyFundMonths < 3
-      ? 2
-      : emergencyFundMonths < 6
-        ? 4
-        : 5;
-  const assetScore = assetRatio < 0.25
-    ? 1
-    : assetRatio < 0.75
-      ? 2
-      : assetRatio < 1.25
-        ? 3
-        : assetRatio < 2
-          ? 4
-          : 5;
+    : 1 + (clamp(savingsRate, 0, 50) / 50) * 4;
+  const defenseScore = 1 + (clamp(emergencyFundMonths, 0, 6) / 6) * 4;
+  const assetScore = 1 + (clamp(assetRatio, 0, 2.5) / 2.5) * 4;
   const score = savingsScore * 0.45 + defenseScore * 0.35 + assetScore * 0.2;
-
-  const label = score >= 4.5
-    ? '100人の村なら上から10番目前後'
-    : score >= 3.8
-      ? '100人の村なら上から30番目前後'
-      : score >= 3
-        ? '100人の村ならちょうど50番目あたり'
-        : score >= 2.2
-          ? '100人の村なら下から30番目前後'
-          : '100人の村なら下から10番目前後';
+  const rawRank = 95 - ((score - 1) / 4) * 90;
+  const rank = clamp(Math.round(rawRank / 5) * 5, 5, 95);
+  const label = rank === 50
+    ? '100人の村ならちょうど50番目あたり'
+    : `100人の村なら上から${rank}番目あたり`;
 
   return {
     label,
-    helper: '※ この順位は正確な統計ではなく、貯蓄率・生活防衛資金・同年代の資産目安から独自に算出したざっくりとした目安です。',
+    helper: '正確な順位ではありません。貯蓄率、急な出費用の貯金、同じ年代の資産目安を合わせた5人きざみの目安です。',
   };
 };
 
@@ -494,14 +624,14 @@ const buildBaselineFutureText = (
 
 const buildLifeChangeHelper = (currentAge: number) => {
   if (currentAge < 40) {
-    return '制度メモ: 40歳から介護保険料が始まります。将来の負担は人によって違うため、ここでは「余力がない時に効きやすい変化」として扱います。';
+    return '年齢で変わるお金: 40歳から介護保険料が支出に増える可能性があります。金額は人によって違うので、この診断では「毎月の余力が減りやすい年齢イベント」としてだけ反映します。';
   }
 
   if (currentAge < 65) {
-    return '制度メモ: 65歳以降は働き方や収入が変わる人が増えます。ここでは「今の働き方をずっと続けられる」と決めつけずに見ます。';
+    return '年齢で変わるお金: 65歳から公的年金を受け取れる可能性があります。実際の金額は払った期間や給与で変わるので、ここでは生活の余力を見るための目安にしています。';
   }
 
-  return '制度メモ: 医療費や介護の負担は年齢・所得・地域で変わります。ここでは将来を保証せず、家計の余力を見るための目安にしています。';
+  return '年齢で変わるお金: 医療費負担や介護のお金は、年齢・収入・住む場所で変わります。ここでは将来を約束せず、家計の余裕を見るための目安にしています。';
 };
 
 const formatReadableMoney = (value: number) => {
@@ -526,7 +656,7 @@ const simulateSplitRoute = (
   years: number,
 ): Pick<ProjectionPoint, 'cashSavings' | 'investedAssets' | 'totalAssets'> => {
   const returnRate = inputs.expectedReturnRate / 100;
-  const targetCashSavings = inputs.monthlyExpenses * 3;
+  const targetCashSavings = (inputs.monthlyExpenses + calculateMonthlyObligations(inputs)) * 3;
   let cashSavings = inputs.cashSavings;
   let investedAssets = inputs.investedAssets;
 
@@ -596,13 +726,13 @@ const createMission = (
       '疲れすぎる働き方は長続きしないので、時間と体力の負担も一緒に見ます。',
     ],
     defense: [
-      '生活防衛資金は、投資ではなく貯金で持つお金です。',
+      '急な出費にそなえるお金は、投資ではなく貯金で持つお金です。',
       '別口座や封筒など、すぐ使いにくい場所へ分けると守りやすくなります。',
       'まずは生活費1か月分、次に3か月分が大きな目安です。',
     ],
     investment: [
-      '投資は生活防衛資金ができてからで大丈夫です。',
-      '銘柄選びより先に、長期・分散・低コストという考え方を確認します。',
+      '投資は急な出費にそなえる貯金ができてからで大丈夫です。',
+      'どの投資先を選ぶかより先に、長く続ける・分けて買う・手数料を低くする、という考え方を確認します。',
       '少額でも、怖くない金額を決めてから始める方が続きやすいです。',
     ],
     work: [
@@ -638,31 +768,31 @@ const buildMetricInsights = (
   const monthlyBuffer: MetricInsight = annualBuffer < 0
     ? {
         label: 'まずはここから',
-        helper: '同年代目安との比較より、毎月のマイナスを止めることが先です。',
+        helper: '同じ年代とのくらべ方より、毎月のマイナスを止めることが先です。',
         tone: 'danger',
       }
     : annualBuffer >= medianSavings * 1.2
       ? {
-          label: '同年代目安より高め',
-          helper: `年間余力は同年代の貯蓄額目安 ${formatCurrency(medianSavings)} より高めです。`,
+          label: '同じ年代の目安より高め',
+          helper: `1年で残るお金は、同じ年代の貯金額目安 ${formatCurrency(medianSavings)} より高めです。`,
           tone: 'good',
         }
       : annualBuffer >= medianSavings * 0.8
         ? {
-            label: '同年代目安に近い',
-            helper: `年間余力は同年代の貯蓄額目安 ${formatCurrency(medianSavings)} に近い水準です。`,
+            label: '同じ年代の目安に近い',
+            helper: `1年で残るお金は、同じ年代の貯金額目安 ${formatCurrency(medianSavings)} に近いです。`,
             tone: 'neutral',
           }
         : {
             label: 'まずはここから',
-            helper: `同年代の貯蓄額目安 ${formatCurrency(medianSavings)} へ、少しずつ近づけます。`,
+            helper: `同じ年代の貯金額目安 ${formatCurrency(medianSavings)} へ、少しずつ近づけます。`,
             tone: 'warn',
           };
 
   const savingsRateInsight: MetricInsight = savingsRate < 0
     ? {
         label: '赤字',
-        helper: 'まず支出か収入のどちらかを整えて、0%以上を目指す段階です。',
+        helper: 'まず支出か収入のどちらかを整えて、0%以上を目指すところです。',
         tone: 'danger',
       }
     : savingsRate < 10
@@ -680,12 +810,12 @@ const buildMetricInsights = (
         : savingsRate < 40
           ? {
               label: 'かなり良い',
-              helper: '働き方を少し軽くする選択肢を作りやすい水準です。',
+              helper: '働き方を少し軽くする道を作りやすい状態です。',
               tone: 'good',
             }
           : {
               label: 'とても強い',
-              helper: '生活防衛や将来の自由時間づくりに回せる余力が大きいです。',
+              helper: '急な出費へのそなえや、将来の自由時間づくりに回せるお金が大きいです。',
               tone: 'good',
             };
 
@@ -697,13 +827,13 @@ const buildMetricInsights = (
       }
     : emergencyFundMonths < 3
       ? {
-          label: '生活防衛3か月まであと少し',
+          label: '3か月分の貯金まであと少し',
           helper: '3か月分が見えると、仕事や収入が揺れた時の考える時間が増えます。',
           tone: 'neutral',
         }
       : emergencyFundMonths < 6
         ? {
-            label: '生活防衛6か月を育成中',
+            label: '6か月分の貯金を育てています',
             helper: '3か月分は到達済み。投資や働き方見直しの準備に入りやすい状態です。',
             tone: 'good',
           }
@@ -736,7 +866,7 @@ const buildMissions = (
         title: `月${formatCurrency(gap)}分の赤字を止める`,
         body: '固定費を1つだけ見直し、まず毎月のマイナスを小さくします。',
         impact: '赤字脱出',
-        difficulty: 'boss',
+        difficulty: 'hard',
         xp: 80,
         why: '赤字のままだと、投資や貯金より先に生活が苦しくなりやすいからです。',
         completionChecks: ['固定費を1つ選んだ', '金額を確認した', '減らす方法を1つ実行した'],
@@ -753,7 +883,7 @@ const buildMissions = (
       createMission({
         id: 'no-new-risk',
         category: 'defense',
-        title: '投資より生活防衛を優先',
+        title: '投資より貯金を優先',
         body: '生活費が足りない間は、値動きのある投資より現金確保を先にします。',
         impact: '守りを固める',
         difficulty: 'easy',
@@ -767,7 +897,7 @@ const buildMissions = (
       createMission({
         id: 'first-buffer',
         category: 'defense',
-        title: `${nextGoal?.label ?? '生活防衛ライン'}へ進む`,
+        title: `${nextGoal?.label ?? '急な出費にそなえる貯金'}へ進む`,
         body: '余ったお金を使い切る前に、先取りで別枠に逃がします。',
         impact: `${Math.round(nextGoal?.progress ?? 0)}%達成中`,
         difficulty: 'normal',
@@ -783,13 +913,103 @@ const buildMissions = (
         xp: 35,
       }),
       createMission({
-        id: 'expense-boss',
+        id: 'fixed-cost-review',
         category: 'saving',
         title: '固定費を1つだけ見直す',
         body: '通信費、サブスク、保険、家賃まわりから1つ選びます。',
         impact: '毎月の余力アップ',
-        difficulty: 'boss',
+        difficulty: 'hard',
         xp: 90,
+      }),
+    ];
+  }
+
+  if (nextGoal.id === 'fire' && nextGoal.status === 'complete') {
+    return [
+      createMission({
+        id: 'withdrawal-plan',
+        category: 'investment',
+        title: '資産の使い方を1枚にまとめる',
+        body: '1年の生活費、現金で持つ年数、投資が大きく下がった時に減らす支出を先に決めます。',
+        impact: '資産生活の安定化',
+        difficulty: 'normal',
+        xp: 90,
+        why: '目標額に届いた後は、増やし方より「使い方」と「守り方」が生活の安心に効くからです。',
+        steps: [
+          '1年の生活費と、資産を使う割合を確認する',
+          '現金で何か月分持つか決める',
+          '投資が下がった年に減らす支出を3つ書く',
+          '働く・働かないを決める条件を1つ書く',
+        ],
+        tips: [
+          'FIRE目標額に届いた後も、生活費6か月から2年分の現金を持つと判断の余白が増えます。',
+          '完全に働かない前提だけでなく、好きな仕事を少し残す案も比較すると現実味が増します。',
+          '投資は目安どおりに増えないことがあります。悪い年の行動を先に決めておくと慌てにくいです。',
+        ],
+        completionChecks: ['1年の生活費を書いた', '現金で持つ金額を決めた', '投資が下がった時の支出ルールを決めた'],
+      }),
+      createMission({
+        id: 'fire-life-test',
+        category: 'work',
+        title: '仕事を減らした1週間を試す',
+        body: '休みの日や有休で、理想の時間割と支出が本当に合うか小さく試します。',
+        impact: '暮らし方の確認',
+        difficulty: 'easy',
+        xp: 60,
+      }),
+      createMission({
+        id: 'risk-bucket-check',
+        category: 'defense',
+        title: '生活費の現金バケツを確認する',
+        body: '投資資産とは別に、すぐ使えるお金が十分あるか見ます。',
+        impact: '投資が下がった時の安心',
+        difficulty: 'easy',
+        xp: 55,
+      }),
+    ];
+  }
+
+  if (nextGoal.id === 'fire' && nextGoal.progress >= 80) {
+    return [
+      createMission({
+        id: 'near-fire-risk-review',
+        category: 'investment',
+        title: 'FIRE前の守りを点検する',
+        body: '目標額に近い時期ほど、投資が下がる場合と生活費の見込みを確認します。',
+        impact: 'FIRE前の安定化',
+        difficulty: 'normal',
+        xp: 80,
+        why: 'FIRE目標額に近い時期は、貯める力だけでなく、投資が大きく下がる時や予定外の支出で計画がくずれないかの確認が大事だからです。',
+        steps: [
+          '生活費を少なく見すぎていないか見る',
+          '生活費6か月分以上の現金があるか確認する',
+          '投資に回している割合が怖すぎないか確認する',
+          '仕事を減らす時期を1年遅らせる場合の安心度も見る',
+        ],
+        tips: [
+          '目標額の少しの差より、生活費の見込み違いの方が大きく効くことがあります。',
+          '退職や仕事を減らす前に、健康保険や税金など退職後に増える支払いを確認すると安心です。',
+          '一気に仕事をゼロにせず、少し働いて暮らす案もくらべられます。',
+        ],
+        completionChecks: ['生活費を見直した', '現金の守りを確認した', '退職後に増える支払いを1つ調べた'],
+      }),
+      createMission({
+        id: 'side-fire-option',
+        category: 'work',
+        title: '少し働く案も比較する',
+        body: '月5万円から10万円の好きな仕事がある場合、必要資産がどれだけ軽くなるか見ます。',
+        impact: '選べる道を増やす',
+        difficulty: 'easy',
+        xp: 55,
+      }),
+      createMission({
+        id: 'investment-policy-note',
+        category: 'investment',
+        title: '投資のルールを短く書く',
+        body: '積立、資産の使い方、投資が下がった時にやらないことをメモにします。',
+        impact: '迷いを減らす',
+        difficulty: 'easy',
+        xp: 50,
       }),
     ];
   }
@@ -800,7 +1020,7 @@ const buildMissions = (
       category: 'work',
       title: '働き方の軽さを育てる',
       body: '増えた余力を生活水準ではなく、自由時間の確保に振り分けます。',
-      impact: '減労働に近づく',
+      impact: '仕事を軽くする',
       difficulty: 'normal',
       xp: 70,
     }),
@@ -820,9 +1040,9 @@ const buildMissions = (
           createMission({
             id: 'investment-review',
             category: 'investment',
-            title: '今の投資方針を確認する',
+            title: '今の投資ルールを確認する',
             body: '今の積立額と方針が目的に合っているか、ざっくり確認します。',
-            impact: '投資の最適化',
+            impact: '投資を見直す',
             difficulty: 'normal',
             xp: 45,
           }),
@@ -831,7 +1051,7 @@ const buildMissions = (
       id: 'next-stage',
       category: 'defense',
       title: `${nextGoal?.label ?? '自由な生活'}を次の目的地にする`,
-      body: '大きなFIREより、次の段階を進めることに集中します。',
+      body: 'FIREのような大きな目標だけを追わず、次の小さな目標を進めることに集中します。',
       impact: `${Math.round(nextGoal?.progress ?? 100)}%達成中`,
       difficulty: 'normal',
       xp: 55,
@@ -877,9 +1097,9 @@ export const buildRecommendedQuests = (
       createMission({
         id: 'defense-shield-10000',
         category: 'defense',
-        title: '生活防衛資金に1万円を移す',
+        title: '急な出費用の貯金に1万円を移す',
         body: '別口座や封筒など、使いにくい場所へ移します。',
-        impact: '生活防衛資金アップ',
+        impact: '急な出費へのそなえアップ',
         difficulty: 'normal',
         xp: 55,
       }),
@@ -887,7 +1107,7 @@ export const buildRecommendedQuests = (
         id: 'phone-plan-check',
         category: 'saving',
         title: '通信費プランを比較する',
-        body: '乗り換えまでしなくてOK。今の料金と安い候補を1つ並べます。',
+        body: '乗り換えまでしなくてOK。今の料金と安い案を1つ並べます。',
         impact: '固定費の見直し',
         difficulty: 'normal',
         xp: 65,
@@ -972,7 +1192,7 @@ export const buildRecommendedQuests = (
       id: 'index-learning',
       category: 'investment',
       title: '長期・分散・低コストを調べる',
-      body: '銘柄選びの前に、投資で守る3つのルールを確認します。',
+      body: 'どの投資先を選ぶか決める前に、投資で守る3つのルールを確認します。',
       impact: '投資の基本を確認',
       difficulty: 'easy',
       xp: 35,
@@ -1011,14 +1231,18 @@ export const buildRecommendedQuests = (
   return combined.slice(0, 5);
 };
 
-const buildLifeRpgStatus = (
+const buildLifeStageStatus = (
   inputs: CompassInputs,
   status: StabilityStatus,
   savingsRate: number,
   emergencyFundMonths: number,
   nextGoal: GoalStep,
-): LifeRpgStatus => {
-  const level = status === 'deficit'
+): LifeStageStatus => {
+  const fireComplete = nextGoal.id === 'fire' && nextGoal.status === 'complete' && nextGoal.targetAmount > 0;
+  const nearFire = nextGoal.id === 'fire' && nextGoal.progress >= 80;
+  const level = fireComplete
+    ? 6
+    : status === 'deficit'
     ? 1
     : emergencyFundMonths < 1
       ? 2
@@ -1028,30 +1252,38 @@ const buildLifeRpgStatus = (
           ? 4
           : 5;
 
-  const bossName = status === 'deficit'
-    ? '赤字を止める'
-    : emergencyFundMonths < 3
-      ? '急な出費に備える'
-      : inputs.workPain === 'high'
-        ? '働く負担を減らす'
-        : '固定費の見直し';
+  const priorityTheme = fireComplete
+    ? '資産の使い方を整える'
+    : nearFire
+      ? 'FIRE前の守りを点検する'
+      : status === 'deficit'
+        ? '赤字を止める'
+        : emergencyFundMonths < 3
+          ? '急な出費に備える'
+          : inputs.workPain === 'high'
+            ? '働く負担を減らす'
+            : '余力の使い道を決める';
 
   return {
     title: level <= 1
-      ? '生活立て直し見習い'
+      ? '赤字ストップ優先'
       : level === 2
-        ? '余力づくり中'
+        ? '1か月分の守りづくり'
         : level === 3
-          ? '生活防衛を育成中'
+          ? '3か月分の守りづくり'
           : level === 4
-            ? '働き方見直し中'
-            : '自由時間ビルダー',
+            ? '余力づくり中'
+            : level === 5
+              ? nearFire
+                ? 'FIRE前の守り確認'
+                : '余力の使い道を決める'
+              : 'FIRE後の生活設計',
     level,
     stageName: nextGoal.label,
-    bossName,
-    shieldLabel: `${emergencyFundMonths.toFixed(1)}か月分`,
-    shieldProgress: clamp((emergencyFundMonths / 6) * 100, 0, 100),
-    workLightnessLabel: inputs.workPain === 'high' ? '重い' : inputs.workPain === 'medium' ? 'ふつう' : '軽め',
+    priorityTheme,
+    safetyMonthsLabel: `${emergencyFundMonths.toFixed(1)}か月分`,
+    safetyProgress: clamp((emergencyFundMonths / 6) * 100, 0, 100),
+    workLightnessLabel: inputs.workPain === 'high' ? 'かなり重い' : inputs.workPain === 'medium' ? '少し重い' : inputs.workPain === 'low' ? '軽め' : '未入力',
     workLightnessProgress: clamp(savingsRate * 2 + emergencyFundMonths * 8, 0, 100),
   };
 };
@@ -1115,38 +1347,78 @@ export const completeQuest = (
 const buildProjection = (inputs: CompassInputs, annualSavings: number): ProjectionPoint[] => {
   const points: ProjectionPoint[] = [];
   const returnRate = inputs.expectedReturnRate / 100;
-  const targetCashSavings = inputs.monthlyExpenses * 3;
+  const targetCashSavings = (inputs.monthlyExpenses + calculateMonthlyObligations(inputs)) * 3;
   let cashSavings = inputs.cashSavings;
   let investedAssets = inputs.investedAssets;
+  let deficitBalance = 0;
 
   for (let year = 0; year <= 40; year++) {
     const age = inputs.currentAge + year;
     if (year % 2 === 0 || year === 1 || year === 40) {
-      const totalAssets = cashSavings + investedAssets;
+      const totalAssets = cashSavings + investedAssets - deficitBalance;
       points.push({
         age,
         cashSavings: Math.max(0, Math.round(cashSavings)),
         investedAssets: Math.max(0, Math.round(investedAssets)),
-        totalAssets: Math.max(0, Math.round(totalAssets)),
-        assets: Math.max(0, Math.round(totalAssets)),
+        deficitBalance: deficitBalance > 0 ? -Math.round(deficitBalance) : 0,
+        totalAssets: Math.round(totalAssets),
+        longTermCarePremium: Math.round(calculateProjectedLongTermCarePremium(age, inputs.monthlyIncome)),
+        pensionIncome: Math.round(calculateProjectedPensionIncome(age, inputs)),
+        pensionContributionRelief: Math.round(calculateProjectedPensionContributionRelief(age, inputs)),
+        annualLifeChangeImpact: Math.round(calculateProjectedPensionIncome(age, inputs) + calculateProjectedPensionContributionRelief(age, inputs) - calculateProjectedLongTermCarePremium(age, inputs.monthlyIncome)),
+        assets: Math.round(totalAssets),
         label: `${age}歳`,
       });
     }
 
     investedAssets = Math.max(0, investedAssets * (1 + returnRate));
-    if (annualSavings >= 0) {
+    const longTermCarePremium = calculateProjectedLongTermCarePremium(age, inputs.monthlyIncome);
+    const pensionIncome = calculateProjectedPensionIncome(age, inputs);
+    const pensionContributionRelief = calculateProjectedPensionContributionRelief(age, inputs);
+    const adjustedAnnualSavings = annualSavings - longTermCarePremium + pensionIncome + pensionContributionRelief;
+    if (adjustedAnnualSavings >= 0) {
+      let remainingSavings = adjustedAnnualSavings;
+      if (deficitBalance > 0) {
+        const debtPayment = Math.min(remainingSavings, deficitBalance);
+        deficitBalance -= debtPayment;
+        remainingSavings -= debtPayment;
+      }
       const cashGap = Math.max(0, targetCashSavings - cashSavings);
-      const cashContribution = Math.min(annualSavings, cashGap);
+      const cashContribution = Math.min(remainingSavings, cashGap);
       cashSavings += cashContribution;
-      investedAssets += annualSavings - cashContribution;
+      investedAssets += remainingSavings - cashContribution;
     } else {
-      const cashDrawdown = Math.min(cashSavings, Math.abs(annualSavings));
+      let needed = Math.abs(adjustedAnnualSavings);
+      const cashDrawdown = Math.min(cashSavings, needed);
       cashSavings -= cashDrawdown;
-      investedAssets = Math.max(0, investedAssets - (Math.abs(annualSavings) - cashDrawdown));
+      needed -= cashDrawdown;
+      const investmentDrawdown = Math.min(investedAssets, needed);
+      investedAssets -= investmentDrawdown;
+      needed -= investmentDrawdown;
+      deficitBalance += needed;
     }
   }
 
   return points;
+};
+
+const calculateProjectedLongTermCarePremium = (age: number, monthlyIncome: number): number => {
+  if (age < LONG_TERM_CARE_START_AGE || monthlyIncome <= 0) return 0;
+
+  const annualIncome = monthlyIncome * 12;
+  return Math.max(72000, annualIncome * LONG_TERM_CARE_PREMIUM_RATE);
+};
+
+const calculateProjectedPensionIncome = (age: number, inputs: CompassInputs): number => {
+  if (age < PENSION_START_AGE) return 0;
+
+  return buildPensionEstimate(inputs).monthlyBasicFullAmount * 12;
+};
+
+const calculateProjectedPensionContributionRelief = (age: number, inputs: CompassInputs): number => {
+  if (age < 60 || inputs.monthlyPensionContribution <= 0) return 0;
+
+  return inputs.monthlyPensionContribution * 12;
 };
 
 const calculateYearsToTargetWithSplit = (
@@ -1157,7 +1429,7 @@ const calculateYearsToTargetWithSplit = (
   if (targetAmount <= 0) return 0;
 
   const returnRate = inputs.expectedReturnRate / 100;
-  const targetCashSavings = inputs.monthlyExpenses * 3;
+  const targetCashSavings = (inputs.monthlyExpenses + calculateMonthlyObligations(inputs)) * 3;
   let cashSavings = inputs.cashSavings;
   let investedAssets = inputs.investedAssets;
 

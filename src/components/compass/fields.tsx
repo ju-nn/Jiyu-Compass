@@ -1,30 +1,4 @@
-import type { ExperienceLevel, MoneyStressLevel, WorkPainLevel, WorkReductionGoal } from '../../utils/compass';
-
-export const workGoalOptions: { value: WorkReductionGoal; label: string; detail: string }[] = [
-  { value: 'stabilize', label: 'まず生活を安定させたい', detail: '赤字や不安定さを減らす' },
-  { value: 'save', label: '貯金できる体質にしたい', detail: '月の余力を作る' },
-  { value: 'reduce_work', label: '働く量を減らしたい', detail: '自由時間を増やす' },
-  { value: 'semi_retire', label: 'セミリタイアしたい', detail: '少し働いて暮らす' },
-  { value: 'fire', label: 'FIREを目指したい', detail: '資産で生活を支える' },
-];
-
-export const experienceOptions: { value: ExperienceLevel; label: string }[] = [
-  { value: 'none', label: 'まだない' },
-  { value: 'starting', label: '始めたい' },
-  { value: 'some', label: '少しある' },
-];
-
-export const moneyStressOptions: { value: MoneyStressLevel; label: string; detail: string }[] = [
-  { value: 'low', label: '低め', detail: '今はそこまで焦っていない' },
-  { value: 'medium', label: 'ふつう', detail: '少し不安なので整えたい' },
-  { value: 'high', label: '高い', detail: 'かなりしんどい。早く立て直したい' },
-];
-
-export const workPainOptions: { value: WorkPainLevel; label: string; detail: string }[] = [
-  { value: 'low', label: 'まだ平気', detail: '働く量は今のままでもよい' },
-  { value: 'medium', label: '少し重い', detail: 'できれば減らしたい' },
-  { value: 'high', label: 'かなり嫌', detail: '早く軽くしたい' },
-];
+import { useId, useMemo, useRef, useState } from 'react';
 
 const formatDisplay = (value: number, multiplier: number) => {
   if (!Number.isFinite(value)) return '';
@@ -34,6 +8,28 @@ const formatDisplay = (value: number, multiplier: number) => {
   const rounded = Math.round(converted * 10) / 10;
   return rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toString();
 };
+
+const getRangeConfig = (label: string, multiplier: number) => {
+  if (multiplier === 1) {
+    return { min: 16, max: 80, step: 1, quickStep: 1 };
+  }
+
+  if (label.includes('貯金') || label.includes('投資資産')) {
+    return { min: 0, max: 5000 * multiplier, step: 10 * multiplier, quickStep: 10 * multiplier };
+  }
+
+  if (label.includes('ローン') || label.includes('年金') || label.includes('社会保険') || label.includes('返済')) {
+    return { min: 0, max: 50 * multiplier, step: multiplier, quickStep: multiplier };
+  }
+
+  if (label.includes('生活費')) {
+    return { min: 0, max: 80 * multiplier, step: multiplier, quickStep: multiplier };
+  }
+
+  return { min: 0, max: 120 * multiplier, step: multiplier, quickStep: multiplier };
+};
+
+const clampToRange = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const parseInput = (raw: string, multiplier: number) => {
   const normalized = raw.replace(/[^\d.-]/g, '');
@@ -56,19 +52,97 @@ export function NumberField({
   multiplier?: number;
   onChange: (value: number) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [customValue, setCustomValue] = useState(formatDisplay(value, multiplier));
+  const fieldId = useId();
+  const closeTimer = useRef<number | null>(null);
+  const rangeConfig = useMemo(() => getRangeConfig(label, multiplier), [label, multiplier]);
+  const sliderValue = clampToRange(value, rangeConfig.min, rangeConfig.max);
+
+  const handleChange = (nextValue: number) => {
+    onChange(nextValue);
+    setCustomValue(formatDisplay(nextValue, multiplier));
+  };
+
+  const handleCustomChange = (raw: string) => {
+    setCustomValue(raw);
+    onChange(parseInput(raw, multiplier));
+    setIsOpen(true);
+  };
+
+  const handleStep = (direction: -1 | 1) => {
+    handleChange(clampToRange(value + (rangeConfig.quickStep * direction), rangeConfig.min, rangeConfig.max));
+  };
+
+  const handleFieldClick = () => {
+    setIsOpen(true);
+  };
+
+  const handleBlur = () => {
+    closeTimer.current = window.setTimeout(() => setIsOpen(false), 120);
+  };
+
+  const handleFocus = () => {
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
   return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-bold text-slate-800">{label}</span>
-      <div className="flex h-11 items-center rounded-lg border border-slate-200 bg-white px-3 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
-        <input
-          value={formatDisplay(value, multiplier)}
-          onChange={(event) => onChange(parseInput(event.target.value, multiplier))}
-          inputMode="decimal"
-          className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-950 outline-none"
-        />
-        <span className="ml-2 text-xs font-bold text-slate-500">{unit}</span>
+    <div className="relative block" onBlur={handleBlur} onFocus={handleFocus}>
+      <label htmlFor={fieldId} className="mb-2 block text-sm font-bold text-slate-800">{label}</label>
+      <div
+        id={fieldId}
+        role="group"
+        aria-expanded={isOpen}
+        className="flex h-11 w-full items-center rounded-lg border border-slate-200 bg-white px-1.5 transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100"
+      >
+        <button
+          type="button"
+          onClick={() => handleStep(-1)}
+          className="h-8 w-8 shrink-0 rounded-md text-lg font-black text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+          aria-label={`${label}を減らす`}
+        >
+          -
+        </button>
+        <div className="flex min-w-0 flex-1 items-center justify-center px-1">
+          <input
+            value={customValue}
+            onChange={(event) => handleCustomChange(event.target.value)}
+            onClick={handleFieldClick}
+            onFocus={handleFieldClick}
+            inputMode="decimal"
+            className="w-full min-w-0 bg-transparent text-center text-sm font-black text-slate-950 outline-none"
+            aria-label={`${label}を直接入力`}
+          />
+          <span className="ml-1 shrink-0 text-xs font-bold text-slate-500">{unit}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => handleStep(1)}
+          className="h-8 w-8 shrink-0 rounded-md text-lg font-black text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+          aria-label={`${label}を増やす`}
+        >
+          +
+        </button>
       </div>
-    </label>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full z-30 mt-2 w-full min-w-0 rounded-lg border border-slate-200 bg-white p-3 shadow-xl sm:w-80">
+          <input
+            type="range"
+            min={rangeConfig.min}
+            max={rangeConfig.max}
+            step={rangeConfig.step}
+            value={sliderValue}
+            onChange={(event) => handleChange(Number(event.target.value))}
+            className="h-2 w-full cursor-pointer accent-emerald-600"
+            aria-label={`${label}をスライダーで調整`}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -91,6 +165,7 @@ export function SelectField<T extends string>({
         onChange={(event) => onChange(event.target.value as T)}
         className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-950 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
       >
+        <option value="">未入力</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -130,4 +205,3 @@ export function ChoiceGrid<T extends string>({
     </div>
   );
 }
-
