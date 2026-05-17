@@ -131,6 +131,8 @@ export function ResultStory({
 
 function ResultMemoCard({ result }: { result: CompassResult }) {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [showMemo, setShowMemo] = useState(false);
+  const memoText = buildResultMemo(result);
 
   const handleCopy = async () => {
     try {
@@ -138,10 +140,11 @@ function ResultMemoCard({ result }: { result: CompassResult }) {
         throw new Error('Clipboard API is unavailable.');
       }
 
-      await navigator.clipboard.writeText(buildResultMemo(result));
+      await navigator.clipboard.writeText(memoText);
       setCopyStatus('copied');
     } catch {
       setCopyStatus('error');
+      setShowMemo(true);
     }
   };
 
@@ -155,19 +158,37 @@ function ResultMemoCard({ result }: { result: CompassResult }) {
             現在地と次の一歩だけを、メモアプリに貼りやすい形でコピーします。
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 transition hover:bg-slate-100"
-        >
-          {copyStatus === 'copied' ? <CheckCircle2 className="h-4 w-4 text-emerald-700" /> : <Copy className="h-4 w-4" />}
-          {copyStatus === 'copied' ? 'コピーしました' : '自分用メモをコピー'}
-        </button>
+        <div className="grid gap-2 sm:flex sm:shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowMemo((current) => !current)}
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 transition hover:bg-slate-100"
+          >
+            {showMemo ? 'メモ内容を閉じる' : 'メモ内容を確認'}
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-3 text-sm font-black text-white transition hover:bg-slate-800"
+          >
+            {copyStatus === 'copied' ? <CheckCircle2 className="h-4 w-4 text-emerald-200" /> : <Copy className="h-4 w-4" />}
+            {copyStatus === 'copied' ? 'コピーしました' : '自分用メモをコピー'}
+          </button>
+        </div>
       </div>
       {copyStatus === 'error' && (
         <p className="mt-3 rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
-          この環境では自動コピーが使えませんでした。画面の「次の一歩」を見ながら、必要な部分だけ控えてください。
+          この環境では自動コピーが使えませんでした。下のメモ本文を選択して控えてください。
         </p>
+      )}
+      {showMemo && (
+        <textarea
+          readOnly
+          value={memoText}
+          rows={10}
+          className="mt-3 w-full resize-y rounded-lg border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+          aria-label="コピーする自分用メモの内容"
+        />
       )}
     </section>
   );

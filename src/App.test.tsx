@@ -182,4 +182,29 @@ describe('App result screen', () => {
     expect(memo).toContain('退職・投資・税務などの判断を断定するものではありません');
     expect(screen.getByText('コピーしました')).toBeTruthy();
   });
+
+  it('自分用メモの内容を画面上で確認できる', () => {
+    renderResultScreen();
+
+    fireEvent.click(screen.getByRole('button', { name: 'メモ内容を確認' }));
+
+    const memoArea = screen.getByRole('textbox', { name: 'コピーする自分用メモの内容' }) as HTMLTextAreaElement;
+    expect(memoArea.value).toContain('ジユウノコンパス診断メモ');
+    expect(memoArea.value).toContain('次の一歩');
+  });
+
+  it('自動コピーできない環境ではメモ本文を表示する', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: undefined,
+      configurable: true,
+    });
+
+    renderResultScreen();
+
+    fireEvent.click(screen.getByRole('button', { name: '自分用メモをコピー' }));
+
+    expect(await screen.findByText(/自動コピーが使えませんでした/)).toBeTruthy();
+    const memoArea = screen.getByRole('textbox', { name: 'コピーする自分用メモの内容' }) as HTMLTextAreaElement;
+    expect(memoArea.value).toContain('生活防衛資金:');
+  });
 });
