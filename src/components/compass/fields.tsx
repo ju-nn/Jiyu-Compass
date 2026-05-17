@@ -11,10 +11,10 @@ const formatDisplay = (value: number, multiplier: number) => {
 
 const getRangeConfig = (label: string, multiplier: number) => {
   if (multiplier === 1) {
-    return { min: 16, max: 80, step: 1, quickStep: 1 };
+    return { min: 16, max: 100, step: 1, quickStep: 1 };
   }
 
-  if (label.includes('貯金') || label.includes('投資資産')) {
+  if (label.includes('貯金') || label.includes('投資資産') || label.includes('投資しているお金')) {
     return { min: 0, max: 5000 * multiplier, step: 10 * multiplier, quickStep: 10 * multiplier };
   }
 

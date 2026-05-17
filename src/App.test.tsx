@@ -147,4 +147,17 @@ describe('App result screen', () => {
     expect(screen.queryByText('資産の使い方を決める')).toBeNull();
     expect(screen.queryByText('仕事を減らした暮らしを試す')).toBeNull();
   });
+
+  it('詳細入力では投資しているお金を10万円単位で増やせる', () => {
+    renderResultScreen({
+      investedAssets: 0,
+      currentAssets: 800000,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /詳しく入れる/ }));
+    fireEvent.click(screen.getByRole('button', { name: '投資しているお金を増やす' }));
+
+    const investmentInput = screen.getByRole('textbox', { name: '投資しているお金を直接入力' }) as HTMLInputElement;
+    expect(investmentInput.value).toBe('10');
+  });
 });
