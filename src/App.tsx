@@ -138,7 +138,7 @@ function App() {
                 <Flag className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-emerald-700">Jiyu Compass v0.7</p>
+                <p className="text-xs font-bold uppercase text-emerald-700">生活コンパス診断</p>
                 <h1 className="text-2xl font-black tracking-normal text-slate-950">ジユウノコンパス</h1>
               </div>
             </div>
@@ -184,7 +184,7 @@ function App() {
                 }`}
               >
                 <Flag className="h-4 w-4" />
-                整える
+                診断結果
               </button>
               <button
                 type="button"
@@ -196,7 +196,7 @@ function App() {
                 }`}
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                逃げ道を作る
+                固定費を軽くする
               </button>
               <button
                 type="button"

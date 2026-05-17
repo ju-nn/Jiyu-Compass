@@ -26,10 +26,13 @@ describe('public release copy', () => {
     expect(publicText).toContain('今の余力と整える順番');
     expect(publicText).toContain('生活を壊さずに自由を増やす');
     expect(publicText).toContain('生活防衛資金、資産が生活費を支える割合、働き方を軽くする順番');
+    expect(publicText).toContain('生活コンパス診断');
+    expect(publicText).toContain('固定費を軽くする試算');
     expect(publicText).toContain('時間を取り戻す道具');
     expect(publicText).not.toContain('FIREシミュレーター');
     expect(publicText).not.toContain('おすすめ');
     expect(publicText).not.toContain('Lv.');
+    expect(publicText).not.toContain('Jiyu Compass v0.7');
   });
 
   it('公開UIに計算前提と免責を表示する', () => {

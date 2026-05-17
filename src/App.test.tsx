@@ -61,8 +61,8 @@ describe('App result screen', () => {
     expect(screen.getByText('少しずつ進む目標')).toBeTruthy();
     expect(screen.getByText('将来もらえる年金')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /逃げ道を作る/ }));
-    expect(screen.getByText('逃げ道を作る試算')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /固定費を軽くする/ }));
+    expect(screen.getByText('固定費を軽くする試算')).toBeTruthy();
     expect(screen.getByText('支出削減シミュレーター')).toBeTruthy();
     expect(screen.getByText('固定費を下げたら、毎月どれくらい楽になるか')).toBeTruthy();
 

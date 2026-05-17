@@ -259,8 +259,8 @@ function CompassOverview({ result }: { result: CompassResult }) {
         />
       </div>
 
-      <WithdrawalSupportCards result={result} />
       <MissionTimelineCards result={result} />
+      <WithdrawalSupportCards result={result} />
     </section>
   );
 }
@@ -1113,10 +1113,10 @@ export function MoneyTools({ result }: { result: CompassResult }) {
     <div className="space-y-5">
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="max-w-2xl">
-          <p className="text-xs font-bold text-emerald-700">Escape plan</p>
-          <h2 className="mt-1 text-xl font-black text-slate-950">逃げ道を作る試算</h2>
+          <p className="text-xs font-bold text-emerald-700">固定費を軽くする</p>
+          <h2 className="mt-1 text-xl font-black text-slate-950">固定費を軽くする試算</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            固定費を下げたときの余力と、生活防衛資金までの距離を見ながら、現実的な逃げ道を試せます。
+            固定費を下げたときの余力と、生活防衛資金までの距離を見ながら、毎月の負担を軽くする余地を試せます。
           </p>
         </div>
       </section>

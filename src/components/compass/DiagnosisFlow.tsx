@@ -57,7 +57,7 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
       {step === 'profile' && (
         <div className="space-y-5">
           <StepHeader
-            title="まず今の生活防壁を見る"
+            title="まず生活防衛資金を見る"
             body="手元でだいたいわかる数字だけでOKです。生活がどれくらい揺れにくいかと、最初の一歩を見ます。"
           />
           <div className="grid gap-3 sm:grid-cols-2">
@@ -84,7 +84,7 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
         <div className="space-y-5">
           <StepHeader
             title="もう少し詳しく"
-            body="わかるところだけ足すと、毎月残るお金、生活防壁、仕事を軽くする余地が見えやすくなります。"
+            body="わかるところだけ足すと、毎月残るお金、生活防衛資金、仕事を軽くする余地が見えやすくなります。"
           />
 
           <div className="grid gap-3 sm:grid-cols-2">
