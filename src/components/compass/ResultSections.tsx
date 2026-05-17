@@ -26,6 +26,7 @@ import {
   Landmark,
   ExternalLink,
   Map,
+  Copy,
   SlidersHorizontal,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -88,6 +89,7 @@ export function ResultStory({
       <h2 className="mb-4 text-2xl font-black leading-tight text-slate-950">{result.headline}</h2>
       <div className="space-y-3">
         <CompassOverview result={result} />
+        <ResultMemoCard result={result} />
         <PositionMap result={result} />
         <StoryStep
           index="1"
@@ -125,6 +127,73 @@ export function ResultStory({
       </div>
     </section>
   );
+}
+
+function ResultMemoCard({ result }: { result: CompassResult }) {
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+
+  const handleCopy = async () => {
+    try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API is unavailable.');
+      }
+
+      await navigator.clipboard.writeText(buildResultMemo(result));
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('error');
+    }
+  };
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-black text-emerald-700">自分用メモ</p>
+          <h3 className="mt-1 text-base font-black text-slate-950">今日の結果を短く残す</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-600">
+            現在地と次の一歩だけを、メモアプリに貼りやすい形でコピーします。
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 transition hover:bg-slate-100"
+        >
+          {copyStatus === 'copied' ? <CheckCircle2 className="h-4 w-4 text-emerald-700" /> : <Copy className="h-4 w-4" />}
+          {copyStatus === 'copied' ? 'コピーしました' : '自分用メモをコピー'}
+        </button>
+      </div>
+      {copyStatus === 'error' && (
+        <p className="mt-3 rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+          この環境では自動コピーが使えませんでした。画面の「次の一歩」を見ながら、必要な部分だけ控えてください。
+        </p>
+      )}
+    </section>
+  );
+}
+
+function buildResultMemo(result: CompassResult) {
+  const supportLine = result.withdrawalSupport.find((line) => line.rate === 3) ?? result.withdrawalSupport[0];
+  const missions = [
+    result.missionTimeline.today,
+    result.missionTimeline.thisWeek,
+    result.missionTimeline.thisMonth,
+  ];
+
+  return [
+    'ジユウノコンパス診断メモ',
+    '',
+    `現在地: ${result.diagnosisType.title}`,
+    `自由度スコア: ${result.freedomScore.score}点（${result.freedomScore.label}）`,
+    `生活防衛資金: ${result.emergencyFundPlan.stageLabel} / 目安 ${result.emergencyFundPlan.rangeLabel}`,
+    `資産カバー率: 3.0%目安で生活費の約${Math.round(supportLine.coveragePercent)}%`,
+    '',
+    '次の一歩',
+    ...missions.map((mission) => `- ${mission.title}: ${mission.body}`),
+    '',
+    'メモ: この結果は一般的な目安です。退職・投資・税務などの判断を断定するものではありません。',
+  ].join('\n');
 }
 
 function StoryStep({

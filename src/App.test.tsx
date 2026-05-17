@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { COMPASS_STORAGE_KEY, defaultCompassInputs, defaultCompassSaveData, type CompassInputs } from './utils/compass';
 
@@ -159,5 +159,27 @@ describe('App result screen', () => {
 
     const investmentInput = screen.getByRole('textbox', { name: '投資しているお金を直接入力' }) as HTMLInputElement;
     expect(investmentInput.value).toBe('10');
+  });
+
+  it('結果を自分用メモとしてコピーできる', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+
+    renderResultScreen();
+
+    fireEvent.click(screen.getByRole('button', { name: '自分用メモをコピー' }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    const memo = writeText.mock.calls[0][0] as string;
+    expect(memo).toContain('ジユウノコンパス診断メモ');
+    expect(memo).toContain('現在地:');
+    expect(memo).toContain('生活防衛資金:');
+    expect(memo).toContain('資産カバー率:');
+    expect(memo).toContain('次の一歩');
+    expect(memo).toContain('退職・投資・税務などの判断を断定するものではありません');
+    expect(screen.getByText('コピーしました')).toBeTruthy();
   });
 });
