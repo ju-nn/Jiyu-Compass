@@ -1,9 +1,13 @@
 import { CheckCircle2, ListChecks, Sparkles } from 'lucide-react';
 import type {
   CompassInputs,
+  CareerReadinessLevel,
   DiagnosisStep,
+  EmploymentType,
   ExperienceLevel,
+  HouseholdRiskLevel,
   MoneyStressLevel,
+  WorkFlexibilityLevel,
   WorkPainLevel,
   WorkReductionGoal,
 } from '../../utils/compass';
@@ -14,7 +18,11 @@ import {
 } from './fields';
 import {
   experienceOptions,
+  careerReadinessOptions,
+  employmentTypeOptions,
+  householdRiskOptions,
   moneyStressOptions,
+  workFlexibilityOptions,
   workGoalOptions,
   workPainOptions,
 } from './fieldOptions';
@@ -84,6 +92,7 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
             <NumberField label="貯金" value={inputs.cashSavings} unit="万円" multiplier={10000} onChange={(value) => onChange('cashSavings', value)} />
             <NumberField label="投資しているお金" value={inputs.investedAssets} unit="万円" multiplier={10000} onChange={(value) => onChange('investedAssets', value)} />
             <NumberField label="月収（手取り）" value={inputs.monthlyIncome} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyIncome', value)} />
+            <NumberField label="月の安定副収入" value={inputs.monthlyStableSideIncome} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyStableSideIncome', value)} />
             <NumberField label="月の生活費（返済・保険料を除く）" value={inputs.monthlyExpenses} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyExpenses', value)} />
             <NumberField label="自分で払う保険料" value={inputs.monthlyPensionContribution} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyPensionContribution', value)} />
             <NumberField label="年金が少なくなりそうな年数" value={inputs.pensionReducedYears} unit="年" onChange={(value) => onChange('pensionReducedYears', value)} />
@@ -102,6 +111,18 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
+            <SelectField<EmploymentType>
+              label="働き方"
+              value={inputs.employmentType}
+              options={employmentTypeOptions}
+              onChange={(value) => onChange('employmentType', value)}
+            />
+            <SelectField<HouseholdRiskLevel>
+              label="家族・固定費の重さ"
+              value={inputs.householdRisk}
+              options={householdRiskOptions}
+              onChange={(value) => onChange('householdRisk', value)}
+            />
             <SelectField<ExperienceLevel>
               label="貯金の感じ"
               value={inputs.savingsExperience}
@@ -134,13 +155,30 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
             />
           </div>
 
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-800">今の会社で緩められる余地</label>
+            <ChoiceGrid<WorkFlexibilityLevel>
+              value={inputs.workFlexibility}
+              options={workFlexibilityOptions}
+              onChange={(value) => onChange('workFlexibility', value)}
+            />
+          </div>
+
+          <SelectField<CareerReadinessLevel>
+            label="転職準備の進み具合"
+            value={inputs.careerReadiness}
+            options={careerReadinessOptions}
+            onChange={(value) => onChange('careerReadiness', value)}
+          />
+
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
             <p>貯金は普通預金など、すぐ使えるお金の目安です。</p>
             <p className="mt-1">投資しているお金は、株式、投資信託、NISAなどの合計です。なければ0円で大丈夫です。</p>
-            <p className="mt-1">月収は手取りです。給料から引かれている税金・社会保険料は入れなくて大丈夫です。</p>
+            <p className="mt-1">月収は手取りです。給料から引かれている税金・社会保険料は入れなくて大丈夫です。副収入は、毎月ある程度見込めるものだけ入れます。</p>
             <p className="mt-1">月の生活費は、家賃・食費・通信費などです。下に入力したローンや自分で払う保険料は二重に入れないようにします。</p>
             <p className="mt-1">自分で払う保険料は、国民年金や国民健康保険などです。給料から引かれている分は入れなくて大丈夫です。</p>
             <p className="mt-1">年金が少なくなりそうな年数は、免除・未納・海外にいた期間などがある人だけ入れます。普通は0年で大丈夫です。</p>
+            <p className="mt-1">働き方や家族・固定費の重さは、生活防衛資金のレンジと働き方ミッションに使います。ざっくりで大丈夫です。</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

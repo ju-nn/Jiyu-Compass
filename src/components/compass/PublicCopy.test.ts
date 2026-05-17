@@ -22,9 +22,10 @@ describe('public release copy', () => {
   });
 
   it('公開UIは生活コンパスの核を先に伝える', () => {
-    expect(publicText).toContain('働き方を軽くする、生活コンパス診断。');
+    expect(publicText).toContain('お金と働き方の現在地がわかる、生活コンパス診断。');
     expect(publicText).toContain('今の余力と整える順番');
     expect(publicText).toContain('生活を壊さずに自由を増やす');
+    expect(publicText).toContain('生活防衛資金、資産が生活費を支える割合、働き方を軽くする順番');
     expect(publicText).toContain('時間を取り戻す道具');
     expect(publicText).not.toContain('FIREシミュレーター');
     expect(publicText).not.toContain('おすすめ');
@@ -36,6 +37,7 @@ describe('public release copy', () => {
     expect(publicText).toContain('投資で増える計算は、投資しているお金だけに使います');
     expect(publicText).toContain('将来の結果は約束できません');
     expect(publicText).toContain('だいたいの位置');
+    expect(publicText).toContain('4.0%は米国過去データの参考線');
   });
 
   it('公開UIではミッション候補を選ばせない', () => {

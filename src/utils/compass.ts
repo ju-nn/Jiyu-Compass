@@ -11,6 +11,18 @@ export type DiagnosisStep = 'profile' | 'life' | 'result' | 'quest';
 export type MoneyStressLevel = '' | 'low' | 'medium' | 'high';
 export type WorkPainLevel = '' | 'low' | 'medium' | 'high';
 export type QuestCategory = 'saving' | 'income' | 'defense' | 'investment' | 'work';
+export type EmploymentType = '' | 'employee' | 'freelance' | 'unstable';
+export type HouseholdRiskLevel = '' | 'low' | 'medium' | 'high';
+export type WorkFlexibilityLevel = '' | 'none' | 'some' | 'strong';
+export type CareerReadinessLevel = '' | 'none' | 'some' | 'ready';
+export type CompassDiagnosisType =
+  | 'life_defense'
+  | 'fixed_cost_review'
+  | 'rest_consult'
+  | 'in_job_relief'
+  | 'career_prepare'
+  | 'asset_supported_adjustment'
+  | 'semi_retire_ready';
 
 export interface CompassInputs {
   currentAge: number;
@@ -25,11 +37,16 @@ export interface CompassInputs {
   monthlyStudentLoanPayment: number;
   monthlyHousingLoanPayment: number;
   monthlyCarLoanPayment: number;
+  monthlyStableSideIncome: number;
   workReductionGoal: WorkReductionGoal;
   savingsExperience: ExperienceLevel;
   investmentExperience: ExperienceLevel;
   moneyStress: MoneyStressLevel;
   workPain: WorkPainLevel;
+  employmentType: EmploymentType;
+  householdRisk: HouseholdRiskLevel;
+  workFlexibility: WorkFlexibilityLevel;
+  careerReadiness: CareerReadinessLevel;
   expectedReturnRate: number;
   withdrawalRate: number;
 }
@@ -84,6 +101,48 @@ export interface LifeStageStatus {
   workLightnessProgress: number;
 }
 
+export interface WithdrawalSupportLine {
+  rate: number;
+  label: string;
+  monthlySupport: number;
+  coveragePercent: number;
+  note: string;
+}
+
+export interface EmergencyFundPlan {
+  minMonths: number;
+  maxMonths: number;
+  targetMinAmount: number;
+  targetMaxAmount: number;
+  currentMonths: number;
+  progressToMin: number;
+  stageLabel: string;
+  nextMilestoneLabel: string;
+  nextMilestoneAmount: number;
+  rangeLabel: string;
+  reason: string;
+}
+
+export interface FreedomScore {
+  score: number;
+  label: string;
+  factors: string[];
+}
+
+export interface DiagnosisTypeResult {
+  id: CompassDiagnosisType;
+  title: string;
+  icon: string;
+  summary: string;
+  reasons: string[];
+}
+
+export interface MissionTimeline {
+  today: Mission;
+  thisWeek: Mission;
+  thisMonth: Mission;
+}
+
 export interface CompassResult {
   annualIncome: number;
   annualExpenses: number;
@@ -106,6 +165,11 @@ export interface CompassResult {
   goalSteps: GoalStep[];
   missions: Mission[];
   recommendedQuests: Mission[];
+  diagnosisType: DiagnosisTypeResult;
+  emergencyFundPlan: EmergencyFundPlan;
+  withdrawalSupport: WithdrawalSupportLine[];
+  freedomScore: FreedomScore;
+  missionTimeline: MissionTimeline;
   lifeStage: LifeStageStatus;
   projection: ProjectionPoint[];
   metricInsights: MetricInsights;
@@ -193,13 +257,18 @@ export const defaultCompassInputs: CompassInputs = {
   monthlyStudentLoanPayment: 0,
   monthlyHousingLoanPayment: 0,
   monthlyCarLoanPayment: 0,
+  monthlyStableSideIncome: 0,
   workReductionGoal: '',
   savingsExperience: '',
   investmentExperience: '',
   moneyStress: '',
   workPain: '',
+  employmentType: '',
+  householdRisk: '',
+  workFlexibility: '',
+  careerReadiness: '',
   expectedReturnRate: 4,
-  withdrawalRate: 4,
+  withdrawalRate: 3,
 };
 
 export const defaultCompassSaveData: CompassSaveData = {
@@ -232,13 +301,18 @@ export const normalizeCompassInputs = (rawInputs: Partial<CompassInputs>): Compa
     monthlyStudentLoanPayment: Math.max(0, safeNumber(rawInputs.monthlyStudentLoanPayment ?? defaultCompassInputs.monthlyStudentLoanPayment, 0)),
     monthlyHousingLoanPayment: Math.max(0, safeNumber(rawInputs.monthlyHousingLoanPayment ?? defaultCompassInputs.monthlyHousingLoanPayment, 0)),
     monthlyCarLoanPayment: Math.max(0, safeNumber(rawInputs.monthlyCarLoanPayment ?? defaultCompassInputs.monthlyCarLoanPayment, 0)),
+    monthlyStableSideIncome: Math.max(0, safeNumber(rawInputs.monthlyStableSideIncome ?? defaultCompassInputs.monthlyStableSideIncome, 0)),
     workReductionGoal: normalizeChoice(rawInputs.workReductionGoal, ['', 'stabilize', 'save', 'reduce_work', 'semi_retire', 'fire']),
     savingsExperience: normalizeChoice(rawInputs.savingsExperience, ['', 'none', 'starting', 'some']),
     investmentExperience: normalizeChoice(rawInputs.investmentExperience, ['', 'none', 'starting', 'some']),
     moneyStress: normalizeChoice(rawInputs.moneyStress, ['', 'low', 'medium', 'high']),
     workPain: normalizeChoice(rawInputs.workPain, ['', 'low', 'medium', 'high']),
+    employmentType: normalizeChoice(rawInputs.employmentType, ['', 'employee', 'freelance', 'unstable']),
+    householdRisk: normalizeChoice(rawInputs.householdRisk, ['', 'low', 'medium', 'high']),
+    workFlexibility: normalizeChoice(rawInputs.workFlexibility, ['', 'none', 'some', 'strong']),
+    careerReadiness: normalizeChoice(rawInputs.careerReadiness, ['', 'none', 'some', 'ready']),
     expectedReturnRate: clamp(safeNumber(rawInputs.expectedReturnRate ?? defaultCompassInputs.expectedReturnRate, 4), -10, 20),
-    withdrawalRate: clamp(safeNumber(rawInputs.withdrawalRate ?? defaultCompassInputs.withdrawalRate, 4), 1, 10),
+    withdrawalRate: clamp(safeNumber(rawInputs.withdrawalRate ?? defaultCompassInputs.withdrawalRate, 3), 1, 10),
   };
 };
 
@@ -309,12 +383,13 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
   const totalAssets = inputs.cashSavings + inputs.investedAssets;
   const monthlyObligations = calculateMonthlyObligations(inputs);
   const effectiveMonthlyExpenses = inputs.monthlyExpenses + monthlyObligations;
+  const effectiveMonthlyIncome = inputs.monthlyIncome + inputs.monthlyStableSideIncome;
 
-  const annualIncome = inputs.monthlyIncome * 12;
+  const annualIncome = effectiveMonthlyIncome * 12;
   const annualExpenses = effectiveMonthlyExpenses * 12;
   const annualSavings = annualIncome - annualExpenses;
-  const monthlyBalance = inputs.monthlyIncome - effectiveMonthlyExpenses;
-  const savingsRate = inputs.monthlyIncome > 0 ? (monthlyBalance / inputs.monthlyIncome) * 100 : 0;
+  const monthlyBalance = effectiveMonthlyIncome - effectiveMonthlyExpenses;
+  const savingsRate = effectiveMonthlyIncome > 0 ? (monthlyBalance / effectiveMonthlyIncome) * 100 : 0;
   const fireNumber = calculateFireNumber(annualExpenses, inputs.withdrawalRate);
   const yearsToFire = calculateYearsToTargetWithSplit(inputs, annualSavings, fireNumber);
   const achievableFireAge = yearsToFire === null ? null : inputs.currentAge + yearsToFire;
@@ -323,6 +398,9 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
     : 12;
   const emergencyFundMonths = cashEmergencyFundMonths;
   const fireProgress = fireNumber > 0 ? clamp((totalAssets / fireNumber) * 100, 0, 100) : 0;
+  const emergencyFundPlan = buildEmergencyFundPlan(inputs, effectiveMonthlyExpenses, cashEmergencyFundMonths);
+  const withdrawalSupport = buildWithdrawalSupportLines(totalAssets, effectiveMonthlyExpenses, inputs.monthlyStableSideIncome);
+  const standardCoveragePercent = withdrawalSupport.find((line) => line.rate === 3)?.coveragePercent ?? 0;
 
   const stabilityStatus: StabilityStatus = monthlyBalance < 0
     ? 'deficit'
@@ -346,7 +424,7 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
     ['invest-start', '少額投資スタート準備', sixMonthFund, inputs.cashSavings, '守りを固めたら、長期・分散・低コストを学び始めます。'] as const,
     ['reduce-work', '週1日分の仕事を軽くする', oneDayWorkFreedom, totalAssets, '資産と余力で、働き方を選びやすくします。'] as const,
     ['semi-retire', '少し働いて暮らせるライン', semiRetireTarget, totalAssets, '生活費の一部を資産で支えられる状態です。'] as const,
-    ['fire', '働かなくても暮らせるライン', fireNumber, totalAssets, '働かない選び方も現実に入る最後の目標です。'] as const,
+    ['fire', '生活費を資産で大きく支えるライン', fireNumber, totalAssets, '完全に辞める判定ではなく、働き方をかなり選びやすい目安です。'] as const,
   ];
 
   let previousComplete = true;
@@ -368,6 +446,15 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
     emergencyFundMonths,
     nextGoal,
   );
+  const freedomScore = buildFreedomScore(inputs, savingsRate, emergencyFundPlan, standardCoveragePercent);
+  const diagnosisType = buildDiagnosisType(
+    inputs,
+    stabilityStatus,
+    monthlyBalance,
+    emergencyFundPlan,
+    standardCoveragePercent,
+  );
+  const missionTimeline = buildMissionTimeline(inputs, diagnosisType.id, emergencyFundPlan, monthlyBalance);
   const lifeStage = buildLifeStageStatus(inputs, stabilityStatus, savingsRate, emergencyFundMonths, nextGoal);
   const projection = buildProjection(inputs, annualSavings);
   const metricInsights = buildMetricInsights(inputs, monthlyBalance, savingsRate, emergencyFundMonths);
@@ -375,11 +462,11 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
   const story = buildCompassStory(inputs, stabilityStatus, monthlyBalance, savingsRate, emergencyFundMonths, projection, recommendedQuests[0]);
 
   const headline = isFireAchieved
-    ? 'FIRE目標額には届いています。次は資産の使い方と働き方を決めるところです。'
+    ? '資産が生活費を大きく支える位置です。次は使い方と働き方を決めるところです。'
     : isNearFire
-      ? 'FIRE目標額が近づいています。無理をしすぎず、守りと資産の使い方を確認するところです。'
+      ? '資産で生活費を支える力がかなり育っています。無理をしすぎず、守りと使い方を確認するところです。'
       : stabilityStatus === 'deficit'
-        ? '今はFIRE計算より、赤字を止めることが最優先です。'
+        ? '今は大きな決断より、赤字を止めることが最優先です。'
         : stabilityStatus === 'fragile'
           ? 'まず1か月分の貯金を作れば、選べることが増え始めます。'
           : stabilityStatus === 'building'
@@ -408,6 +495,11 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
     goalSteps,
     missions,
     recommendedQuests,
+    diagnosisType,
+    emergencyFundPlan,
+    withdrawalSupport,
+    freedomScore,
+    missionTimeline,
     lifeStage,
     projection,
     metricInsights,
@@ -427,6 +519,452 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
       investmentExperience: inputs.investmentExperience,
       workPain: inputs.workPain,
     },
+  };
+};
+
+const buildEmergencyFundPlan = (
+  inputs: CompassInputs,
+  effectiveMonthlyExpenses: number,
+  currentMonths: number,
+): EmergencyFundPlan => {
+  let minMonths = inputs.employmentType === 'freelance' || inputs.employmentType === 'unstable' ? 6 : 3;
+  let maxMonths = inputs.employmentType === 'freelance' || inputs.employmentType === 'unstable' ? 12 : 6;
+
+  if (inputs.householdRisk === 'medium') {
+    minMonths = Math.max(minMonths, 6);
+    maxMonths = Math.max(maxMonths, inputs.employmentType === 'employee' ? 9 : 12);
+  }
+
+  if (inputs.householdRisk === 'high') {
+    minMonths = Math.max(minMonths, inputs.employmentType === 'employee' ? 6 : 9);
+    maxMonths = 12;
+  }
+
+  if (effectiveMonthlyExpenses <= 0) {
+    return {
+      minMonths,
+      maxMonths,
+      targetMinAmount: 0,
+      targetMaxAmount: 0,
+      currentMonths: 12,
+      progressToMin: 100,
+      stageLabel: '支出入力待ち',
+      nextMilestoneLabel: '月の生活費を入れる',
+      nextMilestoneAmount: 0,
+      rangeLabel: `${minMonths}〜${maxMonths}か月分`,
+      reason: '生活費が入ると、働き方や家計リスクに合わせたレンジを出します。',
+    };
+  }
+
+  const cash = inputs.cashSavings;
+  const milestones = [
+    { label: 'まず1万円', amount: 10000 },
+    { label: '次に3万円', amount: 30000 },
+    { label: '10万円の小さな防壁', amount: 100000 },
+    { label: '生活費0.5か月分', amount: effectiveMonthlyExpenses * 0.5 },
+    { label: '生活費1か月分', amount: effectiveMonthlyExpenses },
+    { label: `下限レンジ${minMonths}か月分`, amount: effectiveMonthlyExpenses * minMonths },
+    { label: `安心寄り${maxMonths}か月分`, amount: effectiveMonthlyExpenses * maxMonths },
+  ];
+  const nextMilestone = milestones.find((milestone) => cash < milestone.amount) ?? milestones[milestones.length - 1];
+  const targetMinAmount = effectiveMonthlyExpenses * minMonths;
+  const targetMaxAmount = effectiveMonthlyExpenses * maxMonths;
+  const employmentText = inputs.employmentType === 'freelance'
+    ? 'フリーランス・自営業寄りなので、収入変動に備えて厚めに見ます。'
+    : inputs.employmentType === 'unstable'
+      ? '収入が揺れやすい前提なので、会社員標準より厚めに見ます。'
+      : '会社員・公務員寄りの目安として、まず3〜6か月分を基準にします。';
+  const householdText = inputs.householdRisk === 'high'
+    ? '子ども、単一収入、高家賃、ローンなどの重さがあるため上限寄りです。'
+    : inputs.householdRisk === 'medium'
+      ? '家族や固定費の重さを少し見込んで、やや厚めにしています。'
+      : '大きな上振れ要因は未入力なので、標準レンジで見ています。';
+
+  return {
+    minMonths,
+    maxMonths,
+    targetMinAmount,
+    targetMaxAmount,
+    currentMonths,
+    progressToMin: clamp((cash / targetMinAmount) * 100, 0, 100),
+    stageLabel: buildEmergencyStageLabel(cash, effectiveMonthlyExpenses, minMonths, currentMonths),
+    nextMilestoneLabel: nextMilestone.label,
+    nextMilestoneAmount: Math.max(0, Math.ceil((nextMilestone.amount - cash) / 1000) * 1000),
+    rangeLabel: `${minMonths}〜${maxMonths}か月分`,
+    reason: `${employmentText}${householdText}`,
+  };
+};
+
+const buildEmergencyStageLabel = (
+  cashSavings: number,
+  monthlyExpenses: number,
+  minMonths: number,
+  currentMonths: number,
+) => {
+  if (cashSavings < 10000) return 'はじめの足場づくり';
+  if (cashSavings < 30000) return '1万円を越えたところ';
+  if (cashSavings < 100000) return '小さな防壁づくり';
+  if (currentMonths < 0.5) return 'ミニ防衛の途中';
+  if (currentMonths < 1) return '生活費1か月分の手前';
+  if (currentMonths < minMonths) return `下限${minMonths}か月分へ向かう途中`;
+  if (monthlyExpenses > 0) return '下限レンジに到達';
+  return '支出入力待ち';
+};
+
+const buildWithdrawalSupportLines = (
+  totalAssets: number,
+  effectiveMonthlyExpenses: number,
+  monthlyStableSideIncome: number,
+): WithdrawalSupportLine[] => {
+  const lines = [
+    { rate: 2.5, label: '保守的な目安', note: '長期・為替・税制のブレを厚めに見ます。' },
+    { rate: 3, label: '標準寄りの目安', note: 'この診断の主な参考線です。' },
+    { rate: 3.5, label: 'やや攻めた目安', note: '支出調整や働く余地がある人向けの確認線です。' },
+    { rate: 4, label: '米国過去データの参考線', note: '米国過去データの参考線です。日本の税制・為替・長期リスクを完全には反映しません。' },
+  ];
+
+  return lines.map((line) => {
+    const monthlySupport = Math.round((totalAssets * (line.rate / 100)) / 12);
+    const totalSupport = monthlySupport + monthlyStableSideIncome;
+    return {
+      ...line,
+      monthlySupport,
+      coveragePercent: effectiveMonthlyExpenses > 0
+        ? clamp((totalSupport / effectiveMonthlyExpenses) * 100, 0, 999)
+        : 0,
+    };
+  });
+};
+
+const buildFreedomScore = (
+  inputs: CompassInputs,
+  savingsRate: number,
+  emergencyFundPlan: EmergencyFundPlan,
+  standardCoveragePercent: number,
+): FreedomScore => {
+  const balanceScore = clamp((savingsRate + 10) * 2, 0, 100);
+  const defenseScore = emergencyFundPlan.progressToMin;
+  const assetScore = clamp(standardCoveragePercent * 1.4, 0, 100);
+  const workPainScore = inputs.workPain === 'high' ? 20 : inputs.workPain === 'medium' ? 55 : inputs.workPain === 'low' ? 80 : 60;
+  const flexScore = inputs.workFlexibility === 'strong' ? 90 : inputs.workFlexibility === 'some' ? 70 : inputs.workFlexibility === 'none' ? 35 : 55;
+  const score = Math.round(balanceScore * 0.22 + defenseScore * 0.28 + assetScore * 0.25 + workPainScore * 0.15 + flexScore * 0.10);
+  const factors: string[] = [];
+
+  if (defenseScore < 100) factors.push('生活防衛資金が下限レンジの途中');
+  if (standardCoveragePercent >= 30) factors.push('資産が生活費の一部を支え始めている');
+  if (savingsRate < 0) factors.push('毎月の収支がマイナス');
+  if (savingsRate >= 20) factors.push('毎月の余力が比較的大きい');
+  if (inputs.workPain === 'high') factors.push('仕事のしんどさが自由度を下げている');
+  if (inputs.workFlexibility === 'strong' || inputs.workFlexibility === 'some') factors.push('在職のまま負荷を下げる余地がある');
+
+  return {
+    score,
+    label: score >= 80
+      ? '選択肢を広げやすい'
+      : score >= 60
+        ? '少し動かしやすい'
+        : score >= 40
+          ? '土台を整える途中'
+          : 'まず守りを作る',
+    factors: factors.slice(0, 3),
+  };
+};
+
+const buildDiagnosisType = (
+  inputs: CompassInputs,
+  status: StabilityStatus,
+  monthlyBalance: number,
+  emergencyFundPlan: EmergencyFundPlan,
+  standardCoveragePercent: number,
+): DiagnosisTypeResult => {
+  const highWorkPain = inputs.workPain === 'high' || inputs.moneyStress === 'high';
+  const hasInternalOption = inputs.workFlexibility === 'some' || inputs.workFlexibility === 'strong';
+  const careerReady = inputs.careerReadiness === 'some' || inputs.careerReadiness === 'ready';
+
+  if (highWorkPain && (inputs.workPain === 'high' || inputs.moneyStress === 'high')) {
+    return diagnosis('rest_consult', [
+      '仕事やお金のしんどさが強めに出ています。',
+      '副業や退職判断より、休息・制度確認・相談を先に置く方が安全です。',
+    ]);
+  }
+
+  if (emergencyFundPlan.currentMonths < 1 || inputs.cashSavings < 100000) {
+    return diagnosis('life_defense', [
+      'すぐ使える貯金がまだ薄めです。',
+      `次は${emergencyFundPlan.nextMilestoneLabel}を目指すと、急な支出への耐性が増えます。`,
+    ]);
+  }
+
+  if (status === 'deficit' || monthlyBalance < 10000) {
+    return diagnosis('fixed_cost_review', [
+      '毎月の余力が小さいため、先に固定費を軽くする効果が大きい状態です。',
+      '通信・サブスクのような小さな改善と、住居・保険の大きな改善を分けて見ると動きやすいです。',
+    ]);
+  }
+
+  if (standardCoveragePercent >= 80 && emergencyFundPlan.progressToMin >= 100) {
+    return diagnosis('semi_retire_ready', [
+      '資産が生活費の大きな部分を支える目安です。',
+      '完全に働かない前提ではなく、少し働く案や支出調整も合わせて見る段階です。',
+    ]);
+  }
+
+  if (standardCoveragePercent >= 30 || inputs.monthlyStableSideIncome > 0) {
+    return diagnosis('asset_supported_adjustment', [
+      '資産や安定収入が生活費の一部を支え始めています。',
+      '働く量を少し下げる、週4や短時間勤務を試算する余地があります。',
+    ]);
+  }
+
+  if (hasInternalOption && inputs.workPain !== 'low') {
+    return diagnosis('in_job_relief', [
+      '今の会社の中で負荷を下げる余地がありそうです。',
+      '有給、残業整理、在宅勤務、時差出勤、業務量調整から順番に見るのが現実的です。',
+    ]);
+  }
+
+  if (careerReady && emergencyFundPlan.currentMonths >= 3) {
+    return diagnosis('career_prepare', [
+      '生活防衛資金が少しあり、在職中に次の選択肢を作りやすい状態です。',
+      '退職より先に、求人保存・職務経歴書・面談準備を進めると焦りにくくなります。',
+    ]);
+  }
+
+  return diagnosis('fixed_cost_review', [
+    '毎月の余力を少し増やすと、働き方の選択肢が見えやすくなります。',
+    'まずは今日できる固定費の棚卸しから始めるのが軽い一手です。',
+  ]);
+};
+
+const diagnosis = (id: CompassDiagnosisType, reasons: string[]): DiagnosisTypeResult => {
+  const map: Record<CompassDiagnosisType, Omit<DiagnosisTypeResult, 'id' | 'reasons'>> = {
+    life_defense: {
+      title: 'まず生活防衛タイプ',
+      icon: 'shield',
+      summary: '退職や投資の前に、急な出費に耐える足場を作る位置です。',
+    },
+    fixed_cost_review: {
+      title: '固定費見直しタイプ',
+      icon: 'sliders',
+      summary: '毎月の固定費を1つ軽くすると、自由度が上がりやすい位置です。',
+    },
+    rest_consult: {
+      title: '休息・相談優先タイプ',
+      icon: 'heart',
+      summary: '大きな決断より先に、休む・相談する・制度を確認する位置です。',
+    },
+    in_job_relief: {
+      title: '在職で負荷軽減タイプ',
+      icon: 'briefcase',
+      summary: '今の収入を守りながら、働く時間や場所を1段軽くする位置です。',
+    },
+    career_prepare: {
+      title: '転職準備先行タイプ',
+      icon: 'map',
+      summary: '辞める前に、次の仕事の条件と準備を整える位置です。',
+    },
+    asset_supported_adjustment: {
+      title: '資産補完で働き方調整タイプ',
+      icon: 'coins',
+      summary: '資産や安定収入を補助輪にして、働き方を少し調整できる位置です。',
+    },
+    semi_retire_ready: {
+      title: 'セミリタイア準備タイプ',
+      icon: 'compass',
+      summary: '完全FIREの断定ではなく、生活費の一部を資産で支える設計を詰める位置です。',
+    },
+  };
+
+  return {
+    id,
+    ...map[id],
+    reasons,
+  };
+};
+
+const buildMissionTimeline = (
+  inputs: CompassInputs,
+  diagnosisType: CompassDiagnosisType,
+  emergencyFundPlan: EmergencyFundPlan,
+  monthlyBalance: number,
+): MissionTimeline => {
+  if (diagnosisType === 'rest_consult') {
+    return {
+      today: createMission({
+        id: 'today-rest-signal',
+        category: 'work',
+        title: '今日: 年休・残業・休職制度を1つ確認する',
+        body: '辞めるか続けるかの判断は急がず、まず使える制度を1つだけ見ます。',
+        impact: '休息の入口を作る',
+        difficulty: 'easy',
+      }),
+      thisWeek: createMission({
+        id: 'week-consult-slot',
+        category: 'work',
+        title: '今週: 上司・人事・公的窓口の相談先を1つ決める',
+        body: 'こころの耳や労働条件相談ほっとラインなど、外部の相談先も候補に入れます。',
+        impact: '抱え込みを減らす',
+        difficulty: 'normal',
+      }),
+      thisMonth: createMission({
+        id: 'month-load-reset',
+        category: 'work',
+        title: '今月: 業務量・締切・担当の調整を相談する',
+        body: '副業や転職を増やす前に、まず本業の負荷を1段下げる相談をします。',
+        impact: '仕事の負荷を下げる',
+        difficulty: 'normal',
+      }),
+    };
+  }
+
+  if (diagnosisType === 'life_defense') {
+    return {
+      today: createMission({
+        id: 'today-subscription-stop',
+        category: 'saving',
+        title: '今日: 使っていないサブスクを1つ止める',
+        body: 'まず小さく、毎月の漏れを1つ止めます。',
+        impact: '固定費の即効改善',
+        difficulty: 'easy',
+      }),
+      thisWeek: createMission({
+        id: 'week-defense-transfer',
+        category: 'defense',
+        title: `今週: ${emergencyFundPlan.nextMilestoneLabel}へ近づける`,
+        body: emergencyFundPlan.nextMilestoneAmount > 0
+          ? `あと${formatCurrency(emergencyFundPlan.nextMilestoneAmount)}で次の段階です。金額は小さくて大丈夫です。`
+          : '次の段階に届いています。別口座に分けて守ります。',
+        impact: '生活防衛資金を育てる',
+        difficulty: 'normal',
+      }),
+      thisMonth: createMission({
+        id: 'month-fixed-cost-review',
+        category: 'saving',
+        title: '今月: 通信費・保険・住居費を順番に点検する',
+        body: '通信は今日できる小さな改善、保険と住居は大きく効く改善として分けて見ます。',
+        impact: '固定費の土台改善',
+        difficulty: 'hard',
+      }),
+    };
+  }
+
+  if (diagnosisType === 'in_job_relief') {
+    return {
+      today: createMission({
+        id: 'today-paid-leave-check',
+        category: 'work',
+        title: '今日: 有給残日数と直近の残業時間を確認する',
+        body: '最初の一手は、体力を増やすより負荷を見える化することです。',
+        impact: '働き方の棚卸し',
+        difficulty: 'easy',
+      }),
+      thisWeek: createMission({
+        id: 'week-remote-flex-talk',
+        category: 'work',
+        title: '今週: 在宅・時差出勤・業務量調整を相談する',
+        body: '退職より先に、今の会社の中で軽くできる選択肢を使います。',
+        impact: '在職で負荷軽減',
+        difficulty: 'normal',
+      }),
+      thisMonth: createMission({
+        id: 'month-role-change-check',
+        category: 'work',
+        title: '今月: 異動・職種変更・短時間正社員の余地を見る',
+        body: '週4勤務や時短は、制度や会社ごとの差が大きいので確認から始めます。',
+        impact: '働き方の選択肢を増やす',
+        difficulty: 'hard',
+      }),
+    };
+  }
+
+  if (diagnosisType === 'career_prepare') {
+    return {
+      today: createMission({
+        id: 'today-career-note',
+        category: 'work',
+        title: '今日: しんどい条件と残したい条件を3つずつ書く',
+        body: '求人を見る前に、避けたい負荷を言葉にします。',
+        impact: '転職条件の整理',
+        difficulty: 'easy',
+      }),
+      thisWeek: createMission({
+        id: 'week-job-save',
+        category: 'work',
+        title: '今週: 在宅勤務・残業少なめの求人を保存する',
+        body: '応募は急がず、在職中に比較対象を作ります。',
+        impact: '退職前の準備',
+        difficulty: 'normal',
+      }),
+      thisMonth: createMission({
+        id: 'month-resume-meeting',
+        category: 'work',
+        title: '今月: 職務経歴書を更新し、面談を1件入れる',
+        body: '退職を最後の選択肢にするため、先に逃げ道を作ります。',
+        impact: '転職準備を前進',
+        difficulty: 'normal',
+      }),
+    };
+  }
+
+  if (diagnosisType === 'asset_supported_adjustment' || diagnosisType === 'semi_retire_ready') {
+    const supportText = inputs.monthlyStableSideIncome > 0
+      ? `安定収入${formatCurrency(inputs.monthlyStableSideIncome)}/月も合わせて見ます。`
+      : '月5万円、月10万円の安定収入がある場合も並べて見ます。';
+    return {
+      today: createMission({
+        id: 'today-support-check',
+        category: 'investment',
+        title: '今日: 資産が生活費を支える月額を確認する',
+        body: '2.5%、3.0%、3.5%のレンジで、無理のない支え方を見ます。',
+        impact: '資産カバー率の確認',
+        difficulty: 'easy',
+      }),
+      thisWeek: createMission({
+        id: 'week-work-ratio-plan',
+        category: 'work',
+        title: '今週: 何割働くかの案を2つ作る',
+        body: supportText,
+        impact: '働き方調整の試算',
+        difficulty: 'normal',
+      }),
+      thisMonth: createMission({
+        id: 'month-withdrawal-guardrail',
+        category: 'investment',
+        title: '今月: 暴落時に減らす支出を3つ決める',
+        body: '4%を安全な答えにせず、支出を調整できる余地も一緒に作ります。',
+        impact: '取り崩しリスクの確認',
+        difficulty: 'hard',
+      }),
+    };
+  }
+
+  return {
+    today: createMission({
+      id: 'today-fixed-cost-list',
+      category: 'saving',
+      title: '今日: 固定費を5つに分けて書き出す',
+      body: '住居費、保険、通信、サブスク、光熱費を並べます。',
+      impact: '固定費の見える化',
+      difficulty: 'easy',
+    }),
+    thisWeek: createMission({
+      id: 'week-phone-plan',
+      category: 'saving',
+      title: '今週: 通信プランを見直す',
+      body: '小さくても毎月効く改善から始めます。',
+      impact: '今日できる改善',
+      difficulty: 'normal',
+    }),
+    thisMonth: createMission({
+      id: 'month-housing-insurance',
+      category: 'saving',
+      title: '今月: 保険・家賃・ローンを点検する',
+      body: monthlyBalance < 10000
+        ? '余力が小さいので、大きく効く固定費も候補に入れます。'
+        : 'すぐ変えなくても、更新月や見直し時期を確認します。',
+      impact: '大きく効く改善',
+      difficulty: 'hard',
+    }),
   };
 };
 
@@ -470,7 +1008,7 @@ const buildCompassStory = (
   const assumedMonthlyImprovement = buildAssumedMonthlyImprovement(monthlyBalance);
   const improvedAnnualSavings = monthlyBalance * 12 + assumedMonthlyImprovement * 12;
   const improvedPoint = simulateSplitRoute(inputs, improvedAnnualSavings, years);
-  const estimatedMonthlyInvestmentGain = Math.round((improvedPoint.investedAssets * 0.04) / 12);
+  const estimatedMonthlyInvestmentGain = Math.round((improvedPoint.totalAssets * 0.03) / 12);
   const positionInsight = buildPositionInsight(inputs, monthlyBalance, savingsRate, emergencyFundMonths);
   const monthlyGainLabel = formatReadableMoney(estimatedMonthlyInvestmentGain);
 
@@ -534,7 +1072,7 @@ const buildImprovedFutureText = (
   monthlyGainLabel: string,
 ) => {
   const futureBalance = monthlyBalance + assumedMonthlyImprovement;
-  const futureSummary = `${futureAge}歳ごろには投資資産が約${formatCurrency(investedAssets)}。年4%目安なら、お金があなたの代わりに毎月約${monthlyGainLabel}ぶん働いてくれる計算です。`;
+  const futureSummary = `${futureAge}歳ごろには投資資産が約${formatCurrency(investedAssets)}。3.0%の取り崩し目安なら、生活費の一部を毎月約${monthlyGainLabel}ぶん支えられる計算です。`;
 
   if (monthlyBalance < 0) {
     return `まず赤字を止めて、月${formatReadableMoney(Math.max(0, futureBalance))}残る形まで戻せると、${futureSummary}`;
@@ -682,7 +1220,7 @@ const simulateSplitRoute = (
 };
 
 const createMission = (
-  mission: Omit<Mission, 'why' | 'steps' | 'tips' | 'completionChecks'> & Partial<Pick<Mission, 'why' | 'steps' | 'tips' | 'completionChecks'>>,
+  mission: Omit<Mission, 'why' | 'steps' | 'tips' | 'completionChecks' | 'xp'> & Partial<Pick<Mission, 'why' | 'steps' | 'tips' | 'completionChecks' | 'xp'>>,
 ): Mission => {
   const defaultSteps: Record<QuestCategory, string[]> = {
     saving: [
@@ -744,6 +1282,7 @@ const createMission = (
 
   return {
     ...mission,
+    xp: mission.xp ?? 40,
     why: mission.why ?? `${mission.impact}につながる、今の状態に合う行動です。`,
     steps: mission.steps ?? defaultSteps[mission.category],
     tips: mission.tips ?? defaultTips[mission.category],
@@ -942,7 +1481,7 @@ const buildMissions = (
           '働く・働かないを決める条件を1つ書く',
         ],
         tips: [
-          'FIRE目標額に届いた後も、生活費6か月から2年分の現金を持つと判断の余白が増えます。',
+          '資産が大きく育った後も、生活費6か月から2年分の現金を持つと判断の余白が増えます。',
           '完全に働かない前提だけでなく、好きな仕事を少し残す案も比較すると現実味が増します。',
           '投資は目安どおりに増えないことがあります。悪い年の行動を先に決めておくと慌てにくいです。',
         ],
@@ -974,12 +1513,12 @@ const buildMissions = (
       createMission({
         id: 'near-fire-risk-review',
         category: 'investment',
-        title: 'FIRE前の守りを点検する',
+        title: '資産生活に入る前の守りを点検する',
         body: '目標額に近い時期ほど、投資が下がる場合と生活費の見込みを確認します。',
-        impact: 'FIRE前の安定化',
+        impact: '資産生活前の安定化',
         difficulty: 'normal',
         xp: 80,
-        why: 'FIRE目標額に近い時期は、貯める力だけでなく、投資が大きく下がる時や予定外の支出で計画がくずれないかの確認が大事だからです。',
+        why: '資産が生活費を大きく支える時期は、貯める力だけでなく、投資が大きく下がる時や予定外の支出で計画がくずれないかの確認が大事だからです。',
         steps: [
           '生活費を少なく見すぎていないか見る',
           '生活費6か月分以上の現金があるか確認する',
@@ -1051,7 +1590,7 @@ const buildMissions = (
       id: 'next-stage',
       category: 'defense',
       title: `${nextGoal?.label ?? '自由な生活'}を次の目的地にする`,
-      body: 'FIREのような大きな目標だけを追わず、次の小さな目標を進めることに集中します。',
+      body: '大きな目標だけを追わず、次の小さな目標を進めることに集中します。',
       impact: `${Math.round(nextGoal?.progress ?? 100)}%達成中`,
       difficulty: 'normal',
       xp: 55,
@@ -1255,7 +1794,7 @@ const buildLifeStageStatus = (
   const priorityTheme = fireComplete
     ? '資産の使い方を整える'
     : nearFire
-      ? 'FIRE前の守りを点検する'
+      ? '資産生活前の守りを点検する'
       : status === 'deficit'
         ? '赤字を止める'
         : emergencyFundMonths < 3
@@ -1275,9 +1814,9 @@ const buildLifeStageStatus = (
             ? '余力づくり中'
             : level === 5
               ? nearFire
-                ? 'FIRE前の守り確認'
+                ? '資産生活前の守り確認'
                 : '余力の使い道を決める'
-              : 'FIRE後の生活設計',
+              : '資産の使い方を決める',
     level,
     stageName: nextGoal.label,
     priorityTheme,

@@ -105,7 +105,7 @@ function App() {
                   生活コンパス
                 </p>
                 <h2 className="text-2xl font-black leading-tight text-slate-950">
-                  30秒で、今の余力と最初の一歩を見る。
+                  30秒で、生活の土台と最初の一歩を見る。
                 </h2>
               </div>
               <button
@@ -118,7 +118,7 @@ function App() {
               </button>
             </div>
             <p className="text-sm leading-6 text-slate-600">
-              最初は年齢、貯金、月収（手取り）、生活費だけで大丈夫です。生活がどれくらい揺れにくいかを見て、必要なら投資やローン、仕事のしんどさを後から足せます。
+              最初は年齢、貯金、月収（手取り）、生活費だけで大丈夫です。生活防衛資金、資産が生活費を支える割合、働き方を軽くする順番をまとめて見ます。
             </p>
             <button
               type="button"
@@ -163,13 +163,13 @@ function App() {
           </div>
           <div className="max-w-3xl">
             <h2 className="text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
-              働き方を軽くする、生活コンパス診断。
+              お金と働き方の現在地がわかる、生活コンパス診断。
             </h2>
             <p className="mt-3 text-base leading-7 text-slate-600">
-              お金と時間の現在地を見ながら、今の余力と整える順番を確認します。
+              生活費・貯金・投資額・仕事のしんどさから、今の余力と整える順番を確認します。
             </p>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-              生活を壊さずに自由を増やすための、小さな生活設計ツールです。
+              退職や投資を煽らず、生活を壊さずに自由を増やすための、小さな生活設計ツールです。
             </p>
           </div>
           {hasResult && (

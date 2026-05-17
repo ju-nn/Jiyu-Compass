@@ -121,7 +121,7 @@ describe('evaluateCompass', () => {
     expect(result.achievableFireAge).toBe(inputs.currentAge);
   });
 
-  it('初回診断で隠した投資前提は内部デフォルト4%で計算する', () => {
+  it('初回診断で隠した取り崩し前提は内部デフォルト3%で計算する', () => {
     const result = evaluateCompass({
       ...defaultCompassInputs,
       monthlyIncome: 300000,
@@ -133,7 +133,7 @@ describe('evaluateCompass', () => {
       withdrawalRate: Number.NaN,
     });
 
-    expect(result.fireNumber).toBe(60000000);
+    expect(result.fireNumber).toBe(80000000);
     expect(result.projection[1].assets).toBeGreaterThan(1000000);
   });
 
@@ -463,7 +463,7 @@ describe('evaluateCompass', () => {
     expect(result.story.futureInvestedAssets).toBeGreaterThan(0);
   });
 
-  it('投資利益の月額目安は投資資産の年4%を12で割る', () => {
+  it('資産カバーの月額目安は総資産の3%を12で割る', () => {
     const result = evaluateCompass({
       ...defaultCompassInputs,
       monthlyIncome: 300000,
@@ -473,9 +473,9 @@ describe('evaluateCompass', () => {
     });
 
     expect(result.story.estimatedMonthlyInvestmentGain).toBe(
-      Math.round((result.story.futureInvestedAssets * 0.04) / 12),
+      Math.round((result.story.futureTotalAssets * 0.03) / 12),
     );
-    expect(result.story.improvedFutureText).toContain('お金があなたの代わりに');
+    expect(result.story.improvedFutureText).toContain('生活費の一部');
   });
 
   it.each([
@@ -524,37 +524,37 @@ describe('evaluateCompass', () => {
       },
     },
     {
-      name: 'FIRE直前',
+      name: '資産カバー直前',
       inputs: {
         currentAge: 42,
         monthlyIncome: 600000,
         monthlyExpenses: 200000,
         cashSavings: 1200000,
-        investedAssets: 48800000,
+        investedAssets: 72000000,
         workReductionGoal: 'fire',
         investmentExperience: 'some',
       },
       expected: {
         status: 'steady',
         firstQuest: 'near-fire-risk-review',
-        headline: 'FIRE目標額が近づいています',
+        headline: '資産で生活費を支える力',
       },
     },
     {
-      name: 'FIRE目標額到達済み',
+      name: '資産カバー目安到達済み',
       inputs: {
         currentAge: 45,
         monthlyIncome: 300000,
         monthlyExpenses: 200000,
         cashSavings: 2000000,
-        investedAssets: 60000000,
+        investedAssets: 80000000,
         workReductionGoal: 'fire',
         investmentExperience: 'some',
       },
       expected: {
         status: 'steady',
         firstQuest: 'withdrawal-plan',
-        headline: 'FIRE目標額には届いています',
+        headline: '資産が生活費を大きく支える位置',
       },
     },
   ])('$name の状況に合う優先情報と次の1手を返す', ({ inputs, expected }) => {
@@ -568,7 +568,56 @@ describe('evaluateCompass', () => {
     expect(result.headline).toContain(expected.headline);
     expect(result.story.currentStatusText).toBeTruthy();
     expect(result.story.baselineFutureText).toBeTruthy();
-    expect(result.story.improvedFutureText).toContain('年4%目安');
+    expect(result.story.improvedFutureText).toContain('3.0%の取り崩し目安');
+  });
+
+  it('生活防衛資金は働き方と家計リスクに応じてレンジ表示する', () => {
+    const employee = evaluateCompass({
+      ...defaultCompassInputs,
+      monthlyExpenses: 200000,
+      cashSavings: 400000,
+      employmentType: 'employee',
+      householdRisk: 'low',
+    });
+    const freelanceFamily = evaluateCompass({
+      ...defaultCompassInputs,
+      monthlyExpenses: 200000,
+      cashSavings: 400000,
+      employmentType: 'freelance',
+      householdRisk: 'high',
+    });
+
+    expect(employee.emergencyFundPlan.rangeLabel).toBe('3〜6か月分');
+    expect(freelanceFamily.emergencyFundPlan.rangeLabel).toBe('9〜12か月分');
+    expect(freelanceFamily.emergencyFundPlan.reason).toContain('厚め');
+  });
+
+  it('資産カバー率は2.5〜4.0%のレンジで返し、4%を参考線にする', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      monthlyExpenses: 200000,
+      cashSavings: 1000000,
+      investedAssets: 23000000,
+    });
+
+    expect(result.withdrawalSupport.map((line) => line.rate)).toEqual([2.5, 3, 3.5, 4]);
+    expect(result.withdrawalSupport.find((line) => line.rate === 3)?.coveragePercent).toBe(30);
+    expect(result.withdrawalSupport.find((line) => line.rate === 4)?.note).toContain('米国過去データ');
+  });
+
+  it('仕事のしんどさが強い場合は休息と相談を優先する', () => {
+    const result = evaluateCompass({
+      ...defaultCompassInputs,
+      monthlyIncome: 300000,
+      monthlyExpenses: 180000,
+      cashSavings: 1000000,
+      workPain: 'high',
+      moneyStress: 'medium',
+    });
+
+    expect(result.diagnosisType.id).toBe('rest_consult');
+    expect(result.missionTimeline.today.title).toContain('制度');
+    expect(result.missionTimeline.thisMonth.body).toContain('副業');
   });
 
   it('ローンや自分で払う社会保険を支出側に含めて、固定負担として見せる', () => {

@@ -27,6 +27,10 @@ describe('App result screen', () => {
     renderResultScreen();
 
     expect(screen.getByText('ざっくり現在地')).toBeTruthy();
+    expect(screen.getByText('あなたの現在地')).toBeTruthy();
+    expect(screen.getByText('自由度スコア')).toBeTruthy();
+    expect(screen.getByText('セミリタイア距離メーター')).toBeTruthy();
+    expect(screen.getByText('やることは3つまで')).toBeTruthy();
     expect(screen.getAllByText(/100人の村なら/).length).toBeGreaterThan(0);
     expect(screen.getByText('今わかること')).toBeTruthy();
     expect(screen.getByText('このまま進むと')).toBeTruthy();
@@ -39,7 +43,7 @@ describe('App result screen', () => {
     expect(screen.getByText('次に見る目標')).toBeTruthy();
     expect(screen.queryByText('少しずつ進む目標')).toBeNull();
     expect(screen.getByText(/65歳からの年金目安/)).toBeTruthy();
-    expect(screen.getByText(/お金があなたの代わりに/)).toBeTruthy();
+    expect(screen.getAllByText(/生活費の一部/).length).toBeGreaterThan(0);
     expect(screen.getByText(/将来の結果を約束するものではありません/)).toBeTruthy();
     expect(screen.queryByText('数字から読めること')).toBeNull();
     expect(screen.queryByText('将来もらえる年金')).toBeNull();
@@ -122,20 +126,20 @@ describe('App result screen', () => {
     expect(screen.queryByText('生活費1か月分の不足額を見る')).toBeNull();
   });
 
-  it('FIRE目標額到達済みの場合は取り崩しと生活設計の情報を出す', () => {
+  it('資産カバー目安到達済みの場合は取り崩しと生活設計の情報を出す', () => {
     renderResultScreen({
       currentAge: 45,
       monthlyIncome: 300000,
       monthlyExpenses: 200000,
       cashSavings: 2000000,
-      investedAssets: 60000000,
-      currentAssets: 62000000,
+      investedAssets: 80000000,
+      currentAssets: 82000000,
       workReductionGoal: 'fire',
       investmentExperience: 'some',
       workPain: 'low',
     });
 
-    expect(screen.getByText(/FIRE目標額には届いています/)).toBeTruthy();
+    expect(screen.getByText(/資産が生活費を大きく支える位置/)).toBeTruthy();
     expect(screen.getByText('資産の使い方を1枚にまとめる')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /時間を取り戻す/ }));

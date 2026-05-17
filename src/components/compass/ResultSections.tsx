@@ -18,8 +18,14 @@ import {
   TrendingUp,
   Info,
   ArrowRight,
+  BriefcaseBusiness,
+  CalendarDays,
+  CircleDollarSign,
+  Compass,
+  HeartPulse,
   Landmark,
   ExternalLink,
+  Map,
   SlidersHorizontal,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -81,6 +87,7 @@ export function ResultStory({
       </div>
       <h2 className="mb-4 text-2xl font-black leading-tight text-slate-950">{result.headline}</h2>
       <div className="space-y-3">
+        <CompassOverview result={result} />
         <PositionMap result={result} />
         <StoryStep
           index="1"
@@ -183,6 +190,174 @@ function StoryStep({
   );
 }
 
+function CompassOverview({ result }: { result: CompassResult }) {
+  const supportLine = result.withdrawalSupport.find((line) => line.rate === 3) ?? result.withdrawalSupport[0];
+
+  return (
+    <section className="space-y-3">
+      <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-700 shadow-sm">
+              {getDiagnosisIcon(result.diagnosisType.icon)}
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-black text-emerald-800">あなたの現在地</p>
+              <h3 className="mt-1 text-2xl font-black leading-tight text-slate-950">{result.diagnosisType.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">{result.diagnosisType.summary}</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {result.diagnosisType.reasons.map((reason) => (
+              <div key={reason} className="rounded-lg border border-white bg-white/85 p-3 text-xs font-bold leading-5 text-slate-700">
+                {reason}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black text-slate-500">自由度スコア</p>
+              <h3 className="text-xl font-black text-slate-950">{result.freedomScore.label}</h3>
+            </div>
+            <span className="text-3xl font-black text-emerald-700">{result.freedomScore.score}</span>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-emerald-600" style={{ width: `${result.freedomScore.score}%` }} />
+          </div>
+          <div className="mt-3 grid gap-2">
+            {result.freedomScore.factors.map((factor) => (
+              <p key={factor} className="rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold leading-5 text-slate-600">{factor}</p>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <GaugeCard
+          title="生活防衛資金"
+          value={result.emergencyFundPlan.stageLabel}
+          progress={result.emergencyFundPlan.progressToMin}
+          body={`${result.emergencyFundPlan.rangeLabel}が目安です。次は${result.emergencyFundPlan.nextMilestoneLabel}${result.emergencyFundPlan.nextMilestoneAmount > 0 ? `まであと${formatCurrency(result.emergencyFundPlan.nextMilestoneAmount)}` : ''}。`}
+          icon={<ShieldCheck className="h-4 w-4" />}
+        />
+        <GaugeCard
+          title="資産カバー率"
+          value={`${Math.round(supportLine.coveragePercent)}%`}
+          progress={Math.min(100, supportLine.coveragePercent)}
+          body={`3.0%目安では資産が月${formatCurrency(supportLine.monthlySupport)}を支えます。4.0%は米国過去データの参考線としてだけ見ます。`}
+          icon={<CircleDollarSign className="h-4 w-4" />}
+        />
+        <GaugeCard
+          title="働き方を緩める余地"
+          value={result.lifeStage.workLightnessLabel}
+          progress={result.lifeStage.workLightnessProgress}
+          body={getWorkLightnessBody(result)}
+          icon={<BriefcaseBusiness className="h-4 w-4" />}
+        />
+      </div>
+
+      <WithdrawalSupportCards result={result} />
+      <MissionTimelineCards result={result} />
+    </section>
+  );
+}
+
+function WithdrawalSupportCards({ result }: { result: CompassResult }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-emerald-700">セミリタイア距離メーター</p>
+          <h3 className="text-base font-black text-slate-950">資産が生活費の何%を支えるか</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            「もう働かなくてよい」という判定ではなく、生活費の一部を資産で補える目安です。iDeCoなど原則60歳まで使えない資産を含めている場合は、別管理で見てください。
+          </p>
+        </div>
+        <Compass className="mt-1 h-5 w-5 shrink-0 text-emerald-700" />
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {result.withdrawalSupport.map((line) => (
+          <div key={line.rate} className={`rounded-lg border p-3 ${line.rate === 4 ? 'border-slate-200 bg-slate-50' : 'border-emerald-100 bg-emerald-50/60'}`}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-black text-slate-600">{line.rate.toFixed(1)}%</p>
+              <span className="rounded bg-white px-2 py-1 text-[11px] font-black text-slate-500">{Math.round(line.coveragePercent)}%</span>
+            </div>
+            <p className="mt-1 text-sm font-black text-slate-950">{line.label}</p>
+            <p className="mt-2 text-lg font-black text-emerald-700">{formatCurrency(line.monthlySupport)}/月</p>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+              <div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, line.coveragePercent)}%` }} />
+            </div>
+            <p className="mt-2 text-xs leading-5 text-slate-600">{line.note}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MissionTimelineCards({ result }: { result: CompassResult }) {
+  const items = [
+    { label: '今日', mission: result.missionTimeline.today, icon: <CheckCircle2 className="h-4 w-4" /> },
+    { label: '今週', mission: result.missionTimeline.thisWeek, icon: <CalendarDays className="h-4 w-4" /> },
+    { label: '今月', mission: result.missionTimeline.thisMonth, icon: <Map className="h-4 w-4" /> },
+  ];
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-3">
+        <p className="text-xs font-black text-emerald-700">次の一歩</p>
+        <h3 className="text-base font-black text-slate-950">やることは3つまで</h3>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <div className="mb-2 inline-flex items-center gap-2 rounded bg-white px-2 py-1 text-xs font-black text-emerald-700">
+              {item.icon}
+              {item.label}
+            </div>
+            <h4 className="text-sm font-black leading-5 text-slate-950">{item.mission.title.replace(`${item.label}: `, '')}</h4>
+            <p className="mt-2 text-xs leading-5 text-slate-600">{item.mission.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function getDiagnosisIcon(icon: string) {
+  const className = 'h-5 w-5';
+  if (icon === 'heart') return <HeartPulse className={className} />;
+  if (icon === 'briefcase') return <BriefcaseBusiness className={className} />;
+  if (icon === 'map') return <Map className={className} />;
+  if (icon === 'coins') return <CircleDollarSign className={className} />;
+  if (icon === 'compass') return <Compass className={className} />;
+  if (icon === 'sliders') return <SlidersHorizontal className={className} />;
+  return <ShieldCheck className={className} />;
+}
+
+function getWorkLightnessBody(result: CompassResult) {
+  if (result.diagnosisType.id === 'rest_consult') {
+    return 'しんどさが強い時期は、副業や独立より、休息・相談・制度確認を先に置きます。';
+  }
+
+  if (result.diagnosisType.id === 'in_job_relief') {
+    return '有給、残業整理、在宅勤務、時差出勤、業務量調整の順に軽くする余地があります。';
+  }
+
+  if (result.diagnosisType.id === 'career_prepare') {
+    return '退職前に求人保存や職務経歴書の準備を進めると、焦らず選びやすくなります。';
+  }
+
+  if (result.diagnosisType.id === 'asset_supported_adjustment' || result.diagnosisType.id === 'semi_retire_ready') {
+    return '資産と安定収入を補助にして、週4・短時間勤務・役割限定などを比較しやすい状態です。';
+  }
+
+  return 'まず家計の土台を整えると、仕事を軽くする相談や準備がしやすくなります。';
+}
+
 function PositionMap({ result }: { result: CompassResult }) {
   const rank = extractPositionRank(result.story.positionLabel);
   const markerPosition = rank === null ? 50 : Math.max(0, Math.min(100, ((rank - 1) / 99) * 100));
@@ -275,7 +450,7 @@ function NextActionStep({
           <h3 className="font-black text-slate-950">次に動かすなら</h3>
           <p className="mt-2 whitespace-pre-wrap text-sm font-bold leading-6 text-slate-700">{result.story.improvedFutureText}</p>
           <p className="mt-2 text-xs leading-5 text-slate-500">
-            <TermHelp term="年4%" />は目安です。毎月もらえるお金や、将来の結果を約束するものではありません。
+            <TermHelp term="取り崩し率" />は目安です。毎月もらえるお金や、将来の結果を約束するものではありません。
           </p>
           {mission && (
             <div className="mt-4 rounded-lg border border-white bg-white p-4 shadow-sm">
@@ -355,7 +530,7 @@ export function DiagnosisScopeNote() {
           <p className="mt-2 text-sm leading-6 text-slate-600">
             急な出費にそなえるお金は、すぐ使える貯金だけで見ます。その貯金が足りない間は、投資より貯金を優先します。
             投資を始めるなら、<TermHelp term="NISA" />などを調べながら、長く続ける・いろいろ分ける・手数料を低くする、という考え方を大事にしてください。
-            <TermHelp term="年4%" />の計算は目安で、利益や毎月の受け取りを約束するものではありません。
+            <TermHelp term="取り崩し率" />の計算は目安で、利益や毎月の受け取りを約束するものではありません。
           </p>
         </div>
       </div>
@@ -419,9 +594,9 @@ export function DetailMetrics({ result }: { result: CompassResult }) {
         tone="neutral"
       />
       <Metric
-        label="FIRE目標額"
+        label="資産で生活費を支える目安"
         value={formatCurrency(result.fireNumber)}
-        helper={`${formatCurrency(summary.annualExpenses)} ÷ ${withdrawalRateLabel}`}
+        helper={`${formatCurrency(summary.annualExpenses)} ÷ ${withdrawalRateLabel}。退職可否ではなく距離を見る目安です。`}
         tone="neutral"
       />
       <Metric
@@ -614,9 +789,9 @@ function CurrentStatusBreakdown({ result }: { result: CompassResult }) {
           body={annualBuffer > 0 ? 'この黒字を、貯金・投資・仕事の見直しに回せます。' : 'まずは1年でマイナスにならない形を作るのが先です。'}
         />
         <StatusReadout
-          label="FIRE目標額まで"
+          label="資産カバー距離"
           value={`${result.fireProgress.toFixed(1)}%`}
-          body={result.yearsToFire === null ? '今のペースでは、何年で届くか出しにくい状態です。' : `${result.achievableFireAge}歳ごろに届くかもしれません。`}
+          body={result.yearsToFire === null ? '今のペースでは、何年で届くか出しにくい状態です。' : `${result.achievableFireAge}歳ごろに資産が生活費を大きく支える目安です。`}
         />
         <StatusReadout
           label="毎月決まって出るお金"
@@ -941,7 +1116,7 @@ export function MoneyTools({ result }: { result: CompassResult }) {
           <p className="text-xs font-bold text-emerald-700">Escape plan</p>
           <h2 className="mt-1 text-xl font-black text-slate-950">逃げ道を作る試算</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            固定費を下げたときの余力と、FIREまでの距離を見ながら、現実的な逃げ道を試せます。
+            固定費を下げたときの余力と、生活防衛資金までの距離を見ながら、現実的な逃げ道を試せます。
           </p>
         </div>
       </section>
@@ -1359,17 +1534,17 @@ const TERM_HELP: Record<string, { title: string; body: string }> = {
     title: '貯蓄率とは',
     body: '手取り収入のうち、毎月残せている割合です。月の余力 ÷ 月収（手取り）でざっくり見ます。',
   },
-  'FIRE目標額': {
-    title: 'FIRE目標額とは',
-    body: '年間支出を、入力した取り崩し率で割った目安です。働かなくても暮らせる可能性を見るための概算で、達成を約束するものではありません。',
+  '資産で生活費を支える目安': {
+    title: '資産で生活費を支える目安とは',
+    body: '年間支出を、取り崩し率で割った参考値です。退職できるかを断定するものではなく、生活費の何%を資産が支えられるかを見るための概算です。',
   },
-  '年4%': {
-    title: '年4%目安とは',
-    body: '投資しているお金が年4%で増えたら、という確認用の仮定です。実際の値動きや受け取り額を約束するものではありません。',
+  '取り崩し率': {
+    title: '取り崩し率とは',
+    body: '資産から毎年いくら生活費へ回すかの参考率です。この診断では2.5%、3.0%、3.5%を中心に見て、4.0%は米国過去データの参考線として扱います。',
   },
   'NISA': {
     title: 'NISAとは',
-    body: '投資で得た利益に税金がかからない国の制度です。使う場合も、長く続ける・分散する・手数料を低くする考え方が大事です。',
+    body: '投資で得た利益に国内の非課税メリットがある制度です。万能ではなく、損失通算や外国課税などは条件があるため、生活防衛資金とは分けて考えます。',
   },
   '介護保険料': {
     title: '介護保険料とは',

@@ -1,4 +1,13 @@
-import type { ExperienceLevel, MoneyStressLevel, WorkPainLevel, WorkReductionGoal } from '../../utils/compass';
+import type {
+  CareerReadinessLevel,
+  EmploymentType,
+  ExperienceLevel,
+  HouseholdRiskLevel,
+  MoneyStressLevel,
+  WorkFlexibilityLevel,
+  WorkPainLevel,
+  WorkReductionGoal,
+} from '../../utils/compass';
 
 export const workGoalOptions: { value: WorkReductionGoal; label: string; detail: string }[] = [
   { value: 'stabilize', label: 'まず安心したい', detail: '赤字や不安定さを減らす' },
@@ -24,4 +33,28 @@ export const workPainOptions: { value: WorkPainLevel; label: string; detail: str
   { value: 'low', label: 'まだ平気', detail: '働く量は今のままでもよい' },
   { value: 'medium', label: '少し重い', detail: 'できれば減らしたい' },
   { value: 'high', label: 'かなりしんどい', detail: '早く軽くしたい' },
+];
+
+export const employmentTypeOptions: { value: EmploymentType; label: string }[] = [
+  { value: 'employee', label: '会社員・公務員' },
+  { value: 'freelance', label: 'フリーランス・自営業' },
+  { value: 'unstable', label: '契約・派遣・収入変動あり' },
+];
+
+export const householdRiskOptions: { value: HouseholdRiskLevel; label: string }[] = [
+  { value: 'low', label: '身軽め' },
+  { value: 'medium', label: '家族・家賃など少し重め' },
+  { value: 'high', label: '子ども・単一収入・ローンなど重め' },
+];
+
+export const workFlexibilityOptions: { value: WorkFlexibilityLevel; label: string; detail: string }[] = [
+  { value: 'none', label: '少なそう', detail: '社内では動かしにくい' },
+  { value: 'some', label: '少しありそう', detail: '在宅・時差・業務量調整などは相談できる' },
+  { value: 'strong', label: 'かなりありそう', detail: '時短・週4・異動なども候補にできる' },
+];
+
+export const careerReadinessOptions: { value: CareerReadinessLevel; label: string }[] = [
+  { value: 'none', label: 'まだ' },
+  { value: 'some', label: '情報収集中' },
+  { value: 'ready', label: '書類や面談を進めている' },
 ];
