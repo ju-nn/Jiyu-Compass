@@ -735,7 +735,7 @@ export function LifeStatusPanel({ result }: { result: CompassResult }) {
       </div>
       {result.inputSummary.workPain === '' && (
         <p className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs leading-5 text-slate-500">
-          仕事のしんどさは未入力なので、ここでは出していません。詳しく入れると、働き方を軽くする一手に反映します。
+          仕事のしんどさは未入力なので、働き方の提案は控えめにしています。詳しく入れると、有給・在宅・転職準備など、働き方を軽くする一手に反映します。
         </p>
       )}
     </section>

@@ -260,6 +260,7 @@ function App() {
                     </button>
                   </div>
                 </div>
+                <DetailInputBenefitList inputs={saveData.inputs} />
               </section>
 
               {primaryMission && (
@@ -291,3 +292,52 @@ function App() {
 }
 
 export default App;
+
+function DetailInputBenefitList({ inputs }: { inputs: CompassInputs }) {
+  const benefits = buildDetailInputBenefits(inputs);
+
+  return (
+    <div className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+      <p className="text-xs font-black text-emerald-800">詳しく入れると、ここが自分向けになります</p>
+      <div className="mt-2 grid gap-2 md:grid-cols-3">
+        {benefits.map((benefit) => (
+          <div key={benefit} className="rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-700 shadow-sm">
+            {benefit}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function buildDetailInputBenefits(inputs: CompassInputs): string[] {
+  const candidates = [
+    {
+      show: inputs.investedAssets <= 0 && inputs.monthlyStableSideIncome <= 0,
+      text: '投資や安定副収入も含めた資産カバー率が見えます。',
+    },
+    {
+      show: inputs.monthlyPensionContribution <= 0
+        && inputs.monthlyStudentLoanPayment <= 0
+        && inputs.monthlyHousingLoanPayment <= 0
+        && inputs.monthlyCarLoanPayment <= 0,
+      text: 'ローン・保険料込みで、月の余力をより正確に見られます。',
+    },
+    {
+      show: inputs.workPain === '' || inputs.workFlexibility === '' || inputs.careerReadiness === '',
+      text: '仕事を軽くする順番が、有給・在宅・転職準備などから選びやすくなります。',
+    },
+    {
+      show: inputs.employmentType === '' || inputs.householdRisk === '',
+      text: '働き方や家族・固定費の重さに合わせて、生活防衛資金の目安が変わります。',
+    },
+    {
+      show: inputs.moneyStress === '' || inputs.savingsExperience === '' || inputs.investmentExperience === '',
+      text: '不安感や経験に合わせて、投資より守りを優先するかが見えやすくなります。',
+    },
+  ];
+
+  const selected = candidates.filter((candidate) => candidate.show).map((candidate) => candidate.text);
+
+  return (selected.length > 0 ? selected : candidates.map((candidate) => candidate.text)).slice(0, 3);
+}

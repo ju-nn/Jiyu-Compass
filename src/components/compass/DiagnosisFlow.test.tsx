@@ -47,12 +47,25 @@ describe('DiagnosisFlow', () => {
       />,
     );
 
+    expect(screen.getByText('全部入れなくてOKです')).toBeTruthy();
+    expect(screen.getByText(/空欄は診断に使わず、入れた項目だけ結果を細かくします/)).toBeTruthy();
+    expect(screen.getByText('資産')).toBeTruthy();
+    expect(screen.getByText(/投資しているお金を入れると、資産が生活費をどれくらい支えるか/)).toBeTruthy();
     expect(screen.getByText('投資しているお金')).toBeTruthy();
+    expect(screen.getByText('固定負担')).toBeTruthy();
+    expect(screen.getByText(/返済・保険料を分けると、毎月の余力をより正確に見られます/)).toBeTruthy();
     expect(screen.getByText('月の生活費（返済・保険料を除く）')).toBeTruthy();
     expect(screen.getByText('自分で払う保険料')).toBeTruthy();
     expect(screen.getByText('年金が少なくなりそうな年数')).toBeTruthy();
     expect(screen.getByText('奨学金の返済')).toBeTruthy();
     expect(screen.getByText('住宅ローン')).toBeTruthy();
+    expect(screen.getAllByText('働き方').length).toBeGreaterThan(0);
+    expect(screen.getByText(/しんどさや緩める余地を入れると、有給・在宅・転職準備などの順番が変わります/)).toBeTruthy();
+    expect(screen.getByText('不安感・経験')).toBeTruthy();
+    expect(screen.getByText(/不安が強いときは、投資より先に守りのミッションを出します/)).toBeTruthy();
+    expect(screen.getAllByText(/結果の「生活防衛資金」に反映/).length).toBeGreaterThan(0);
+    expect(screen.getByText('結果の「資産カバー率」に反映')).toBeTruthy();
+    expect(screen.getByText('結果の「働き方を緩める余地」に反映')).toBeTruthy();
     expect(screen.getByText(/給料から引かれている分は入れなくて大丈夫/)).toBeTruthy();
     expect(screen.getByText(/普通は0年で大丈夫/)).toBeTruthy();
   });

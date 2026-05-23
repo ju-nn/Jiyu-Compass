@@ -1,4 +1,5 @@
 import { CheckCircle2, ListChecks, Sparkles } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type {
   CompassInputs,
   CareerReadinessLevel,
@@ -87,89 +88,126 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
             body="わかるところだけ足すと、毎月残るお金、生活防衛資金、仕事を軽くする余地が見えやすくなります。"
           />
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <NumberField label="年齢" value={inputs.currentAge} unit="歳" onChange={(value) => onChange('currentAge', value)} />
-            <NumberField label="貯金" value={inputs.cashSavings} unit="万円" multiplier={10000} onChange={(value) => onChange('cashSavings', value)} />
-            <NumberField label="投資しているお金" value={inputs.investedAssets} unit="万円" multiplier={10000} onChange={(value) => onChange('investedAssets', value)} />
-            <NumberField label="月収（手取り）" value={inputs.monthlyIncome} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyIncome', value)} />
-            <NumberField label="月の安定副収入" value={inputs.monthlyStableSideIncome} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyStableSideIncome', value)} />
-            <NumberField label="月の生活費（返済・保険料を除く）" value={inputs.monthlyExpenses} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyExpenses', value)} />
-            <NumberField label="自分で払う保険料" value={inputs.monthlyPensionContribution} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyPensionContribution', value)} />
-            <NumberField label="年金が少なくなりそうな年数" value={inputs.pensionReducedYears} unit="年" onChange={(value) => onChange('pensionReducedYears', value)} />
-            <NumberField label="奨学金の返済" value={inputs.monthlyStudentLoanPayment} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyStudentLoanPayment', value)} />
-            <NumberField label="住宅ローン" value={inputs.monthlyHousingLoanPayment} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyHousingLoanPayment', value)} />
-            <NumberField label="車ローン" value={inputs.monthlyCarLoanPayment} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyCarLoanPayment', value)} />
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-slate-700">
+            <p className="font-black text-slate-950">全部入れなくてOKです</p>
+            <p className="mt-1">
+              わかるところだけで大丈夫です。空欄は診断に使わず、入れた項目だけ結果を細かくします。
+            </p>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-800">今いちばん近い気持ち</label>
-            <ChoiceGrid<WorkReductionGoal>
-              value={inputs.workReductionGoal}
-              options={workGoalOptions}
-              onChange={(value) => onChange('workReductionGoal', value)}
-            />
-          </div>
+          <DetailInputSection
+            title="資産"
+            body="投資しているお金を入れると、資産が生活費をどれくらい支えるかが見えます。"
+            reflectedIn={['結果の「生活防衛資金」に反映', '結果の「資産カバー率」に反映']}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <NumberField label="年齢" value={inputs.currentAge} unit="歳" onChange={(value) => onChange('currentAge', value)} />
+              <NumberField label="貯金" value={inputs.cashSavings} unit="万円" multiplier={10000} onChange={(value) => onChange('cashSavings', value)} />
+              <NumberField label="投資しているお金" value={inputs.investedAssets} unit="万円" multiplier={10000} onChange={(value) => onChange('investedAssets', value)} />
+              <NumberField label="月収（手取り）" value={inputs.monthlyIncome} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyIncome', value)} />
+              <NumberField label="月の安定副収入" value={inputs.monthlyStableSideIncome} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyStableSideIncome', value)} />
+            </div>
+          </DetailInputSection>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <SelectField<EmploymentType>
-              label="働き方"
-              value={inputs.employmentType}
-              options={employmentTypeOptions}
-              onChange={(value) => onChange('employmentType', value)}
-            />
-            <SelectField<HouseholdRiskLevel>
-              label="家族・固定費の重さ"
-              value={inputs.householdRisk}
-              options={householdRiskOptions}
-              onChange={(value) => onChange('householdRisk', value)}
-            />
-            <SelectField<ExperienceLevel>
-              label="貯金の感じ"
-              value={inputs.savingsExperience}
-              options={experienceOptions}
-              onChange={(value) => onChange('savingsExperience', value)}
-            />
-            <SelectField<ExperienceLevel>
-              label="投資の感じ"
-              value={inputs.investmentExperience}
-              options={experienceOptions}
-              onChange={(value) => onChange('investmentExperience', value)}
-            />
-          </div>
+          <DetailInputSection
+            title="固定負担"
+            body="返済・保険料を分けると、毎月の余力をより正確に見られます。"
+            reflectedIn={['結果の「月の余力」に反映', '結果の「生活防衛資金」に反映']}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <NumberField label="月の生活費（返済・保険料を除く）" value={inputs.monthlyExpenses} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyExpenses', value)} />
+              <NumberField label="自分で払う保険料" value={inputs.monthlyPensionContribution} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyPensionContribution', value)} />
+              <NumberField label="年金が少なくなりそうな年数" value={inputs.pensionReducedYears} unit="年" onChange={(value) => onChange('pensionReducedYears', value)} />
+              <NumberField label="奨学金の返済" value={inputs.monthlyStudentLoanPayment} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyStudentLoanPayment', value)} />
+              <NumberField label="住宅ローン" value={inputs.monthlyHousingLoanPayment} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyHousingLoanPayment', value)} />
+              <NumberField label="車ローン" value={inputs.monthlyCarLoanPayment} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyCarLoanPayment', value)} />
+            </div>
+          </DetailInputSection>
 
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-800">お金の不安感</label>
-            <ChoiceGrid<MoneyStressLevel>
-              value={inputs.moneyStress}
-              options={moneyStressOptions}
-              onChange={(value) => onChange('moneyStress', value)}
-            />
-          </div>
+          <DetailInputSection
+            title="働き方"
+            body="しんどさや緩める余地を入れると、有給・在宅・転職準備などの順番が変わります。"
+            reflectedIn={['結果の「働き方を緩める余地」に反映', '今日・今週・今月の一歩に反映']}
+          >
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-800">今いちばん近い気持ち</label>
+              <ChoiceGrid<WorkReductionGoal>
+                value={inputs.workReductionGoal}
+                options={workGoalOptions}
+                onChange={(value) => onChange('workReductionGoal', value)}
+              />
+            </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-800">仕事のしんどさ</label>
-            <ChoiceGrid<WorkPainLevel>
-              value={inputs.workPain}
-              options={workPainOptions}
-              onChange={(value) => onChange('workPain', value)}
-            />
-          </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SelectField<EmploymentType>
+                label="働き方"
+                value={inputs.employmentType}
+                options={employmentTypeOptions}
+                onChange={(value) => onChange('employmentType', value)}
+              />
+              <SelectField<HouseholdRiskLevel>
+                label="家族・固定費の重さ"
+                value={inputs.householdRisk}
+                options={householdRiskOptions}
+                onChange={(value) => onChange('householdRisk', value)}
+              />
+            </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-800">今の会社で緩められる余地</label>
-            <ChoiceGrid<WorkFlexibilityLevel>
-              value={inputs.workFlexibility}
-              options={workFlexibilityOptions}
-              onChange={(value) => onChange('workFlexibility', value)}
-            />
-          </div>
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-800">仕事のしんどさ</label>
+              <ChoiceGrid<WorkPainLevel>
+                value={inputs.workPain}
+                options={workPainOptions}
+                onChange={(value) => onChange('workPain', value)}
+              />
+            </div>
 
-          <SelectField<CareerReadinessLevel>
-            label="転職準備の進み具合"
-            value={inputs.careerReadiness}
-            options={careerReadinessOptions}
-            onChange={(value) => onChange('careerReadiness', value)}
-          />
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-800">今の会社で緩められる余地</label>
+              <ChoiceGrid<WorkFlexibilityLevel>
+                value={inputs.workFlexibility}
+                options={workFlexibilityOptions}
+                onChange={(value) => onChange('workFlexibility', value)}
+              />
+            </div>
+
+            <SelectField<CareerReadinessLevel>
+              label="転職準備の進み具合"
+              value={inputs.careerReadiness}
+              options={careerReadinessOptions}
+              onChange={(value) => onChange('careerReadiness', value)}
+            />
+          </DetailInputSection>
+
+          <DetailInputSection
+            title="不安感・経験"
+            body="不安が強いときは、投資より先に守りのミッションを出します。"
+            reflectedIn={['結果の「次の一歩」に反映', 'ミッションの優先順に反映']}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SelectField<ExperienceLevel>
+                label="貯金の感じ"
+                value={inputs.savingsExperience}
+                options={experienceOptions}
+                onChange={(value) => onChange('savingsExperience', value)}
+              />
+              <SelectField<ExperienceLevel>
+                label="投資の感じ"
+                value={inputs.investmentExperience}
+                options={experienceOptions}
+                onChange={(value) => onChange('investmentExperience', value)}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-800">お金の不安感</label>
+              <ChoiceGrid<MoneyStressLevel>
+                value={inputs.moneyStress}
+                options={moneyStressOptions}
+                onChange={(value) => onChange('moneyStress', value)}
+              />
+            </div>
+          </DetailInputSection>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
             <p>貯金は普通預金など、すぐ使えるお金の目安です。</p>
@@ -241,5 +279,35 @@ function StepHeader({ title, body }: { title: string; body: string }) {
       <h3 className="text-lg font-black text-slate-950">{title}</h3>
       <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
     </div>
+  );
+}
+
+function DetailInputSection({
+  title,
+  body,
+  reflectedIn,
+  children,
+}: {
+  title: string;
+  body: string;
+  reflectedIn: string[];
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div>
+        <p className="text-xs font-black text-emerald-700">入れるとわかること</p>
+        <h3 className="mt-1 text-base font-black text-slate-950">{title}</h3>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
+      </div>
+      {children}
+      <div className="flex flex-wrap gap-2">
+        {reflectedIn.map((item) => (
+          <span key={item} className="rounded-lg bg-white px-2 py-1 text-xs font-black text-slate-600 shadow-sm">
+            {item}
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
