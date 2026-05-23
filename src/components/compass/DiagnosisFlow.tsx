@@ -58,7 +58,7 @@ const detailSteps: {
     id: 'money',
     title: '資産と安定収入',
     shortTitle: '資産',
-    body: '資産が生活費をどれくらい支えるかを見るための追加項目です。',
+    body: '資産が生活費をどれくらい支えるかを見るために使います。',
     icon: <WalletCards className="h-4 w-4" />,
   },
   {
@@ -79,15 +79,19 @@ const detailSteps: {
     id: 'readiness',
     title: '不安と準備の進み具合',
     shortTitle: '準備',
-    body: '守りを優先するか、転職準備や投資学習へ進むかの出し分けに使います。',
+    body: '守りを優先するか、転職準備や投資学習へ進むかを選びやすくします。',
     icon: <HeartPulse className="h-4 w-4" />,
   },
 ];
 
 export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: DiagnosisFlowProps) {
-  const [detailStepIndex, setDetailStepIndex] = useState(0);
+  const [detailStepIndex, setDetailStepIndex] = useState(() => getRecommendedDetailStepIndex(inputs));
   const activeIndex = step === 'profile' ? 0 : step === 'result' ? 1 : step === 'life' ? 2 : 3;
+  const stepSummaries = buildDetailStepSummaries(inputs);
+  const recommendedStepIndex = getRecommendedDetailStepIndex(inputs);
+  const recommendedSummary = stepSummaries[recommendedStepIndex];
   const activeDetailStep = detailSteps[detailStepIndex];
+  const activeSummary = stepSummaries[detailStepIndex];
   const combinedLoanPayment = inputs.monthlyStudentLoanPayment
     + inputs.monthlyHousingLoanPayment
     + inputs.monthlyCarLoanPayment;
@@ -150,15 +154,30 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
         <div className="space-y-5">
           <StepHeader
             title="必要なところだけ、1つずつ"
-            body="詳細入力はアンケートではありません。結果に効く項目だけを短く確認します。いつ離れても、ここまでの入力は自動保存されます。"
+            body="わかるところだけで大丈夫です。必要な項目を1つずつ入れると、結果が少し自分向けになります。"
           />
 
           <div className="flex items-start gap-3 rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-slate-700">
             <Save className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
             <div>
               <p className="font-black text-slate-950">途中で結果へ戻れます</p>
-              <p className="mt-1">わからない項目はそのままで大丈夫です。入力済みの項目だけを使って、結果を少し自分向けにします。</p>
+              <p className="mt-1">未入力のままでも結果は見られます。ここまでの入力は自動保存されます。</p>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black text-emerald-700">次に入れるなら</p>
+              <p className="mt-1 text-sm font-black text-slate-950">{recommendedSummary.title}</p>
+              <p className="mt-1 text-xs font-bold leading-5 text-slate-600">{recommendedSummary.reason}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDetailStepIndex(recommendedStepIndex)}
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-slate-950 px-3 text-sm font-black text-white transition hover:bg-slate-800"
+            >
+              ここを入れる
+            </button>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-4">
@@ -166,15 +185,27 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
               <button
                 key={item.id}
                 type="button"
+                aria-label={`${item.shortTitle}ステップを開く`}
                 onClick={() => setDetailStepIndex(index)}
-                className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-black transition ${
+                className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg border px-3 py-2 text-sm font-black transition ${
                   index === detailStepIndex
                     ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
                     : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                {item.icon}
-                {item.shortTitle}
+                <span className="flex items-center gap-2">
+                  {item.icon}
+                  {item.shortTitle}
+                </span>
+                <span className={`rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-black ${
+                  stepSummaries[index].status === 'complete'
+                    ? 'text-emerald-700'
+                    : stepSummaries[index].status === 'partial'
+                      ? 'text-amber-700'
+                      : 'text-slate-500'
+                }`}>
+                  {stepSummaries[index].statusLabel}
+                </span>
               </button>
             ))}
           </div>
@@ -183,6 +214,8 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
             title={activeDetailStep.title}
             body={activeDetailStep.body}
             countLabel={`${detailStepIndex + 1} / ${detailSteps.length}`}
+            statusLabel={activeSummary.statusLabel}
+            reason={activeSummary.reason}
           >
             {activeDetailStep.id === 'money' && (
               <div className="space-y-4">
@@ -205,7 +238,7 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
                   <NumberField label="年金が少なくなりそうな年数" value={inputs.pensionReducedYears} unit="年" onChange={(value) => onChange('pensionReducedYears', value)} />
                 </div>
                 <p className="rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-600 shadow-sm">
-                  生活費に返済や自分で払う国民年金・国民健康保険を含めている場合は、ここは0円で大丈夫です。二重入力を避けます。
+                  生活費に返済や自分で払う国民年金・国民健康保険を含めている場合は、ここは0円で大丈夫です。同じ支出を二回入れないためです。
                 </p>
               </div>
             )}
@@ -371,11 +404,15 @@ function DetailInputPanel({
   title,
   body,
   countLabel,
+  statusLabel,
+  reason,
   children,
 }: {
   title: string;
   body: string;
   countLabel: string;
+  statusLabel: string;
+  reason: string;
   children: ReactNode;
 }) {
   return (
@@ -386,10 +423,16 @@ function DetailInputPanel({
           <h3 className="mt-1 text-base font-black text-slate-950">{title}</h3>
           <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
         </div>
-        <span className="w-fit rounded-lg bg-white px-2 py-1 text-xs font-black text-slate-600 shadow-sm">
-          任意
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <span className="w-fit rounded-lg bg-white px-2 py-1 text-xs font-black text-slate-600 shadow-sm">
+            任意
+          </span>
+          <span className="w-fit rounded-lg bg-white px-2 py-1 text-xs font-black text-emerald-700 shadow-sm">
+            {statusLabel}
+          </span>
+        </div>
       </div>
+      <p className="rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-600 shadow-sm">{reason}</p>
       {children}
     </section>
   );
@@ -402,4 +445,91 @@ function QuestionBlock({ label, children }: { label: string; children: ReactNode
       {children}
     </div>
   );
+}
+
+type DetailStepStatus = 'empty' | 'partial' | 'complete';
+
+interface DetailStepSummary {
+  title: string;
+  reason: string;
+  status: DetailStepStatus;
+  statusLabel: string;
+}
+
+function buildDetailStepSummaries(inputs: CompassInputs): DetailStepSummary[] {
+  const hasMoney = inputs.investedAssets > 0 || inputs.monthlyStableSideIncome > 0;
+  const fixedCount = [
+    inputs.monthlyPensionContribution > 0,
+    inputs.pensionReducedYears > 0,
+    inputs.monthlyStudentLoanPayment > 0 || inputs.monthlyHousingLoanPayment > 0 || inputs.monthlyCarLoanPayment > 0,
+  ].filter(Boolean).length;
+  const workCount = [
+    inputs.workReductionGoal !== '',
+    inputs.employmentType !== '',
+    inputs.householdRisk !== '',
+    inputs.workPain !== '',
+    inputs.workFlexibility !== '',
+  ].filter(Boolean).length;
+  const readinessCount = [
+    inputs.careerReadiness !== '',
+    inputs.savingsExperience !== '' || inputs.investmentExperience !== '',
+    inputs.moneyStress !== '',
+  ].filter(Boolean).length;
+
+  return [
+    {
+      title: '投資や安定副収入がある人は、資産から',
+      reason: hasMoney
+        ? '資産まわりは入力済みです。生活費を支える割合の見え方に反映されています。'
+        : '投資や毎月見込める副収入がなければ、ここは飛ばして大丈夫です。',
+      status: hasMoney ? 'complete' : 'empty',
+      statusLabel: hasMoney ? '入力済み' : '未入力',
+    },
+    {
+      title: '返済や自分で払う社会保険料があるなら、固定負担から',
+      reason: fixedCount > 0
+        ? '返済や自分で払う社会保険料を、月の余力と生活防衛資金に反映しています。'
+        : '生活費にすべて含めている、または返済がなければ0円のままで大丈夫です。',
+      status: fixedCount >= 2 ? 'complete' : fixedCount === 1 ? 'partial' : 'empty',
+      statusLabel: fixedCount >= 2 ? '入力済み' : fixedCount === 1 ? '少し入力済み' : '未入力',
+    },
+    {
+      title: '仕事のしんどさが結果に強く効くので、働き方から',
+      reason: workCount >= 4
+        ? '働き方はかなり入力済みです。負荷を下げる順番に反映されています。'
+        : '有給・残業整理・在宅相談など、低リスクな順番を出すために使います。',
+      status: workCount >= 4 ? 'complete' : workCount > 0 ? 'partial' : 'empty',
+      statusLabel: workCount >= 4 ? '入力済み' : workCount > 0 ? '少し入力済み' : '未入力',
+    },
+    {
+      title: '不安が強いときは、準備から',
+      reason: readinessCount >= 2
+        ? '不安感や準備状況を、守り優先か次の準備かの出し分けに反映しています。'
+        : 'お金の不安や転職準備の進み具合で、ミッションの優先順が変わります。',
+      status: readinessCount >= 2 ? 'complete' : readinessCount === 1 ? 'partial' : 'empty',
+      statusLabel: readinessCount >= 2 ? '入力済み' : readinessCount === 1 ? '少し入力済み' : '未入力',
+    },
+  ];
+}
+
+function getRecommendedDetailStepIndex(inputs: CompassInputs): number {
+  if (inputs.workPain === '' || inputs.workFlexibility === '' || inputs.employmentType === '') {
+    return 2;
+  }
+
+  if (inputs.moneyStress === '' || inputs.careerReadiness === '') {
+    return 3;
+  }
+
+  if (
+    inputs.monthlyPensionContribution === 0
+    && inputs.pensionReducedYears === 0
+    && inputs.monthlyStudentLoanPayment === 0
+    && inputs.monthlyHousingLoanPayment === 0
+    && inputs.monthlyCarLoanPayment === 0
+  ) {
+    return 1;
+  }
+
+  return 0;
 }

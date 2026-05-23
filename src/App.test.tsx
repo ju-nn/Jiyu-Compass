@@ -91,8 +91,8 @@ describe('App result screen', () => {
     fireEvent.click(screen.getByRole('button', { name: /詳しく入れる/ }));
 
     expect(screen.getByText('必要なところだけ、1つずつ')).toBeTruthy();
-    expect(screen.getByText(/詳細入力はアンケートではありません/)).toBeTruthy();
-    expect(screen.getByText(/入力済みの項目だけを使って、結果を少し自分向けにします/)).toBeTruthy();
+    expect(screen.getByText(/わかるところだけで大丈夫です/)).toBeTruthy();
+    expect(screen.getByText(/未入力のままでも結果は見られます/)).toBeTruthy();
   });
 
   it('次の判断を開くと不足額と改善インパクトを試せる', () => {
@@ -176,6 +176,7 @@ describe('App result screen', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /詳しく入れる/ }));
+    fireEvent.click(screen.getByRole('button', { name: '資産ステップを開く' }));
     fireEvent.click(screen.getByRole('button', { name: '投資しているお金を増やす' }));
 
     const investmentInput = screen.getByRole('textbox', { name: '投資しているお金を直接入力' }) as HTMLInputElement;

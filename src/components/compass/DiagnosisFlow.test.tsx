@@ -48,27 +48,35 @@ describe('DiagnosisFlow', () => {
     );
 
     expect(screen.getByText('必要なところだけ、1つずつ')).toBeTruthy();
-    expect(screen.getByText(/詳細入力はアンケートではありません/)).toBeTruthy();
-    expect(screen.getByText(/いつ離れても、ここまでの入力は自動保存されます/)).toBeTruthy();
+    expect(screen.getByText(/わかるところだけで大丈夫です/)).toBeTruthy();
+    expect(screen.getByText(/ここまでの入力は自動保存されます/)).toBeTruthy();
+    expect(screen.getByText('次に入れるなら')).toBeTruthy();
+    expect(screen.getByText('仕事のしんどさが結果に強く効くので、働き方から')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'ここを入れる' })).toBeTruthy();
+    expect(screen.getAllByText('未入力').length).toBeGreaterThan(0);
+    expect(screen.getByText('働き方の重さ')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '資産ステップを開く' }));
+
     expect(screen.getByText('資産と安定収入')).toBeTruthy();
     expect(screen.getByText('投資しているお金')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /固定負担/ }));
+    fireEvent.click(screen.getByRole('button', { name: '固定負担ステップを開く' }));
 
     expect(screen.getByText('毎月の固定負担')).toBeTruthy();
     expect(screen.getByText('月の生活費（返済などを除く）')).toBeTruthy();
     expect(screen.getByText('毎月の返済（合計）')).toBeTruthy();
     expect(screen.getByText('自分で払う社会保険料など')).toBeTruthy();
     expect(screen.getByText('年金が少なくなりそうな年数')).toBeTruthy();
-    expect(screen.getByText(/二重入力を避けます/)).toBeTruthy();
+    expect(screen.getByText(/同じ支出を二回入れないためです/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /働き方/ }));
+    fireEvent.click(screen.getByRole('button', { name: '働き方ステップを開く' }));
 
     expect(screen.getByText('働き方の重さ')).toBeTruthy();
     expect(screen.getByText(/有給・残業整理・在宅相談など低リスクな順番/)).toBeTruthy();
     expect(screen.getByText('今の会社で軽くできそうな余地')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /準備/ }));
+    fireEvent.click(screen.getByRole('button', { name: '準備ステップを開く' }));
 
     expect(screen.getByText('不安と準備の進み具合')).toBeTruthy();
     expect(screen.getByText('転職や働き方変更の準備')).toBeTruthy();
@@ -86,7 +94,7 @@ describe('DiagnosisFlow', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /働き方/ }));
+    fireEvent.click(screen.getByRole('button', { name: '働き方ステップを開く' }));
     expect(screen.getByRole('button', { name: /少し働いて暮らしたい/ }).className).not.toContain('border-emerald-500');
   });
 

@@ -55,8 +55,9 @@ describe('public release copy', () => {
     expect(publicText).toContain('月収（手取り）');
     expect(publicText).toContain('種類:');
     expect(publicText).toContain('手間:');
-    expect(publicText).toContain('詳細入力はアンケートではありません');
-    expect(publicText).toContain('入力済みの項目だけを使って、結果を少し自分向けにします');
+    expect(publicText).toContain('わかるところだけで大丈夫です');
+    expect(publicText).toContain('未入力のままでも結果は見られます');
+    expect(publicText).not.toContain('詳細入力はアンケートではありません');
     expect(publicText).not.toContain('危険');
     expect(publicText).not.toContain('今すぐ辞め');
     expect(publicText).not.toContain('長期の自由ライン');
