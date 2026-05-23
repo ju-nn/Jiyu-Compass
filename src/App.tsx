@@ -249,7 +249,7 @@ function App() {
                       className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-3 text-sm font-black text-white transition hover:bg-slate-800"
                     >
                       <ListChecks className="h-4 w-4" />
-                      詳しく入れる
+                      必要なところだけ詳しく入れる
                     </button>
                     <button
                       type="button"
@@ -321,7 +321,7 @@ function buildDetailInputBenefits(inputs: CompassInputs): string[] {
         && inputs.monthlyStudentLoanPayment <= 0
         && inputs.monthlyHousingLoanPayment <= 0
         && inputs.monthlyCarLoanPayment <= 0,
-      text: 'ローン・保険料込みで、月の余力をより正確に見られます。',
+      text: '返済・自分で払う社会保険料込みで、月の余力をより正確に見られます。',
     },
     {
       show: inputs.workPain === '' || inputs.workFlexibility === '' || inputs.careerReadiness === '',

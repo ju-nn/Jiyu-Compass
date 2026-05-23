@@ -85,13 +85,14 @@ describe('App result screen', () => {
 
     expect(screen.getByText('詳しく入れると、ここが自分向けになります')).toBeTruthy();
     expect(screen.getByText(/投資や安定副収入も含めた資産カバー率/)).toBeTruthy();
-    expect(screen.getByText(/ローン・保険料込みで、月の余力をより正確に見られます/)).toBeTruthy();
+    expect(screen.getByText(/返済・自分で払う社会保険料込みで、月の余力をより正確に見られます/)).toBeTruthy();
     expect(screen.getByText(/仕事を軽くする順番が、有給・在宅・転職準備などから選びやすくなります/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /詳しく入れる/ }));
 
-    expect(screen.getByText('全部入れなくてOKです')).toBeTruthy();
-    expect(screen.getByText(/入れた項目だけ結果を細かくします/)).toBeTruthy();
+    expect(screen.getByText('必要なところだけ、1つずつ')).toBeTruthy();
+    expect(screen.getByText(/詳細入力はアンケートではありません/)).toBeTruthy();
+    expect(screen.getByText(/入力済みの項目だけを使って、結果を少し自分向けにします/)).toBeTruthy();
   });
 
   it('次の判断を開くと不足額と改善インパクトを試せる', () => {

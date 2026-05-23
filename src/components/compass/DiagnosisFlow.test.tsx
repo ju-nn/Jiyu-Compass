@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { defaultCompassInputs } from '../../utils/compass';
 import { DiagnosisFlow } from './DiagnosisFlow';
@@ -37,7 +37,7 @@ describe('DiagnosisFlow', () => {
     expect(screen.getByText('すぐ結果を見る')).toBeTruthy();
   });
 
-  it('詳細入力では資産と固定負担をまとめて入力できる', () => {
+  it('詳細入力は必要な項目をステップで入力できる', () => {
     render(
       <DiagnosisFlow
         inputs={defaultCompassInputs}
@@ -47,27 +47,33 @@ describe('DiagnosisFlow', () => {
       />,
     );
 
-    expect(screen.getByText('全部入れなくてOKです')).toBeTruthy();
-    expect(screen.getByText(/空欄は診断に使わず、入れた項目だけ結果を細かくします/)).toBeTruthy();
-    expect(screen.getByText('資産')).toBeTruthy();
-    expect(screen.getByText(/投資しているお金を入れると、資産が生活費をどれくらい支えるか/)).toBeTruthy();
+    expect(screen.getByText('必要なところだけ、1つずつ')).toBeTruthy();
+    expect(screen.getByText(/詳細入力はアンケートではありません/)).toBeTruthy();
+    expect(screen.getByText(/いつ離れても、ここまでの入力は自動保存されます/)).toBeTruthy();
+    expect(screen.getByText('資産と安定収入')).toBeTruthy();
     expect(screen.getByText('投資しているお金')).toBeTruthy();
-    expect(screen.getByText('固定負担')).toBeTruthy();
-    expect(screen.getByText(/返済・保険料を分けると、毎月の余力をより正確に見られます/)).toBeTruthy();
-    expect(screen.getByText('月の生活費（返済・保険料を除く）')).toBeTruthy();
-    expect(screen.getByText('自分で払う保険料')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /固定負担/ }));
+
+    expect(screen.getByText('毎月の固定負担')).toBeTruthy();
+    expect(screen.getByText('月の生活費（返済などを除く）')).toBeTruthy();
+    expect(screen.getByText('毎月の返済（合計）')).toBeTruthy();
+    expect(screen.getByText('自分で払う社会保険料など')).toBeTruthy();
     expect(screen.getByText('年金が少なくなりそうな年数')).toBeTruthy();
-    expect(screen.getByText('奨学金の返済')).toBeTruthy();
-    expect(screen.getByText('住宅ローン')).toBeTruthy();
-    expect(screen.getAllByText('働き方').length).toBeGreaterThan(0);
-    expect(screen.getByText(/しんどさや緩める余地を入れると、有給・在宅・転職準備などの順番が変わります/)).toBeTruthy();
-    expect(screen.getByText('不安感・経験')).toBeTruthy();
-    expect(screen.getByText(/不安が強いときは、投資より先に守りのミッションを出します/)).toBeTruthy();
-    expect(screen.getAllByText(/結果の「生活防衛資金」に反映/).length).toBeGreaterThan(0);
-    expect(screen.getByText('結果の「資産カバー率」に反映')).toBeTruthy();
-    expect(screen.getByText('結果の「働き方を緩める余地」に反映')).toBeTruthy();
-    expect(screen.getByText(/給料から引かれている分は入れなくて大丈夫/)).toBeTruthy();
-    expect(screen.getByText(/普通は0年で大丈夫/)).toBeTruthy();
+    expect(screen.getByText(/二重入力を避けます/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /働き方/ }));
+
+    expect(screen.getByText('働き方の重さ')).toBeTruthy();
+    expect(screen.getByText(/有給・残業整理・在宅相談など低リスクな順番/)).toBeTruthy();
+    expect(screen.getByText('今の会社で軽くできそうな余地')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /準備/ }));
+
+    expect(screen.getByText('不安と準備の進み具合')).toBeTruthy();
+    expect(screen.getByText('転職や働き方変更の準備')).toBeTruthy();
+    expect(screen.getByText('お金の準備感')).toBeTruthy();
+    expect(screen.getByText('お金の不安感')).toBeTruthy();
   });
 
   it('未入力の選択肢を勝手に選択済みにしない', () => {
@@ -80,9 +86,8 @@ describe('DiagnosisFlow', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: /仕事を軽くしたい/ }).className).not.toContain('border-emerald-500');
-    expect(screen.getByRole('button', { name: /かなりしんどい早く軽くしたい/ }).className).not.toContain('border-emerald-500');
-    expect(screen.getAllByRole('option', { name: '未入力' }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /働き方/ }));
+    expect(screen.getByRole('button', { name: /少し働いて暮らしたい/ }).className).not.toContain('border-emerald-500');
   });
 
   it('結果画面から詳細入力へ進める', () => {
@@ -96,7 +101,7 @@ describe('DiagnosisFlow', () => {
     );
 
     expect(screen.getByText('診断が出ました')).toBeTruthy();
-    expect(screen.getByText('もう少し詳しく入れる')).toBeTruthy();
+    expect(screen.getByText('必要なところだけ詳しく入れる')).toBeTruthy();
     expect(screen.getByText('最初の4つを直す')).toBeTruthy();
   });
 });
