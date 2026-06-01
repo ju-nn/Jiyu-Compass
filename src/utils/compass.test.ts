@@ -602,7 +602,7 @@ describe('evaluateCompass', () => {
 
     expect(result.withdrawalSupport.map((line) => line.rate)).toEqual([2.5, 3, 3.5, 4]);
     expect(result.withdrawalSupport.find((line) => line.rate === 3)?.coveragePercent).toBe(30);
-    expect(result.withdrawalSupport.find((line) => line.rate === 4)?.note).toContain('米国過去データ');
+    expect(result.withdrawalSupport.find((line) => line.rate === 4)?.note).toContain('米国の過去データ');
   });
 
   it('仕事のしんどさが強い場合は休息と相談を優先する', () => {

@@ -37,7 +37,7 @@ describe('public release copy', () => {
 
   it('公開UIに計算前提と免責を表示する', () => {
     expect(publicText).toContain('急な出費にそなえるお金は、すぐ使える貯金だけで見ます');
-    expect(publicText).toContain('投資で増える計算は、投資しているお金だけに使います');
+    expect(publicText).toContain('投資の目安は、投資しているお金だけで見ます');
     expect(publicText).toContain('将来の結果は約束できません');
     expect(publicText).toContain('だいたいの位置');
     expect(publicText).toContain('4.0%は米国過去データの参考線');
@@ -58,6 +58,8 @@ describe('public release copy', () => {
     expect(publicText).toContain('わかるところだけで大丈夫です');
     expect(publicText).toContain('未入力のままでも結果は見られます');
     expect(publicText).not.toContain('詳細入力はアンケートではありません');
+    expect(publicText).not.toContain('副業や独立より、休息・相談・制度確認を先に置きます');
+    expect(publicText).not.toContain('出し分けに反映しています');
     expect(publicText).not.toContain('危険');
     expect(publicText).not.toContain('今すぐ辞め');
     expect(publicText).not.toContain('長期の自由ライン');

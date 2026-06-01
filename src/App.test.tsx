@@ -39,7 +39,7 @@ describe('App result screen', () => {
     expect(screen.getAllByText('毎月の余力').length).toBeGreaterThan(0);
     expect(screen.getAllByText('急な出費にそなえる貯金').length).toBeGreaterThan(0);
     expect(screen.getByText('次の分かれ道')).toBeTruthy();
-    expect(screen.getByText(/仕事のしんどさは未入力/)).toBeTruthy();
+    expect(screen.getByText(/仕事のしんどさを入れると/)).toBeTruthy();
     expect(screen.getByText('次に見る目標')).toBeTruthy();
     expect(screen.queryByText('少しずつ進む目標')).toBeNull();
     expect(screen.getByText(/65歳からの年金目安/)).toBeTruthy();
@@ -85,8 +85,8 @@ describe('App result screen', () => {
 
     expect(screen.getByText('詳しく入れると、ここが自分向けになります')).toBeTruthy();
     expect(screen.getByText(/投資や安定副収入も含めた資産カバー率/)).toBeTruthy();
-    expect(screen.getByText(/返済・自分で払う社会保険料込みで、月の余力をより正確に見られます/)).toBeTruthy();
-    expect(screen.getByText(/仕事を軽くする順番が、有給・在宅・転職準備などから選びやすくなります/)).toBeTruthy();
+    expect(screen.getByText(/返済や自分で払う社会保険料も入れると、月の余力が見えやすくなります/)).toBeTruthy();
+    expect(screen.getByText(/仕事の重さを入れると、有給・在宅・転職準備などの順番を考えやすくなります/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /詳しく入れる/ }));
 

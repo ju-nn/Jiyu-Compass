@@ -78,7 +78,7 @@ export function MissionGuide({ result, mission }: MissionGuideProps) {
             <MissionMetric label="6か月分の貯金まで" value={formatCurrency(sixMonthGap)} tone={sixMonthGap === 0 ? 'good' : 'warn'} />
           </div>
           <p className="mt-3 text-xs leading-5 text-slate-500">
-            急な出費用の貯金は、入力した生活費と返済・保険料をもとに計算しています。
+            急な出費用の貯金は、生活費と返済・保険料を合わせて見ています。
           </p>
         </section>
 
@@ -214,7 +214,7 @@ function buildDecisionText(
       return `月${formatCurrency(monthlyImpact)}動かせると、赤字は止まります。ただし貯金を増やすには、あと少しだけ月の余力が必要です。`;
     }
 
-    return `月${formatCurrency(monthlyImpact)}動かせると、赤字を止めて毎月${formatCurrency(nextMonthlyBalance)}残る計算です。まずは毎月少し残るラインを超えるかどうかが判断ポイントです。`;
+    return `月${formatCurrency(monthlyImpact)}動かせると、赤字を止めて毎月${formatCurrency(nextMonthlyBalance)}残ります。まずは毎月少し残る状態を目指しましょう。`;
   }
 
   if (nextMonthlyBalance < 0) {
@@ -226,7 +226,7 @@ function buildDecisionText(
   }
 
   if (sixMonthGap > 0 && monthsToSix) {
-    return `3か月分は届いています。このペースなら、6か月分の貯金まで約${monthsToSix}か月です。守りを厚くするか、投資や働き方に回すかを選びやすい段階です。`;
+    return `3か月分は届いています。このペースなら、6か月分の貯金まで約${monthsToSix}か月です。守りを厚くするか、投資や働き方に回すかを落ち着いて考えやすい段階です。`;
   }
 
   return `急な出費用の貯金は十分あります。月${formatCurrency(monthlyImpact)}の改善分は、投資、働く時間を減らす準備、家事時間を減らす買い物に振り分けて考えられます。`;

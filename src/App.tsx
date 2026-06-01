@@ -279,7 +279,7 @@ function App() {
               )}
               <CollapsibleSection
                 title="この診断の見方"
-                body="計算で見ている範囲と、将来の変化として注意したいこと。必要なときだけ開けます。"
+                body="数字の読み方と、年齢で変わりやすいこと。必要なときだけ開けます。"
               >
                 <DiagnosisScopeNote />
               </CollapsibleSection>
@@ -321,19 +321,19 @@ function buildDetailInputBenefits(inputs: CompassInputs): string[] {
         && inputs.monthlyStudentLoanPayment <= 0
         && inputs.monthlyHousingLoanPayment <= 0
         && inputs.monthlyCarLoanPayment <= 0,
-      text: '返済・自分で払う社会保険料込みで、月の余力をより正確に見られます。',
+      text: '返済や自分で払う社会保険料も入れると、月の余力が見えやすくなります。',
     },
     {
       show: inputs.workPain === '' || inputs.workFlexibility === '' || inputs.careerReadiness === '',
-      text: '仕事を軽くする順番が、有給・在宅・転職準備などから選びやすくなります。',
+      text: '仕事の重さを入れると、有給・在宅・転職準備などの順番を考えやすくなります。',
     },
     {
       show: inputs.employmentType === '' || inputs.householdRisk === '',
-      text: '働き方や家族・固定費の重さに合わせて、生活防衛資金の目安が変わります。',
+      text: '働き方や家族・固定費の重さに合わせて、必要な貯金の幅を見やすくなります。',
     },
     {
       show: inputs.moneyStress === '' || inputs.savingsExperience === '' || inputs.investmentExperience === '',
-      text: '不安感や経験に合わせて、投資より守りを優先するかが見えやすくなります。',
+      text: 'お金の不安や経験を入れると、まず貯金を厚くするかが見えやすくなります。',
     },
   ];
 

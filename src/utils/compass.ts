@@ -422,9 +422,9 @@ export const evaluateCompass = (rawInputs: CompassInputs): CompassResult => {
     ['emergency-1m', '急な出費にそなえる貯金1か月', oneMonthFund, inputs.cashSavings, '予定外の出費があっても困りにくい土台を作ります。'] as const,
     ['emergency-3m', '急な出費にそなえる貯金3か月', threeMonthFund, inputs.cashSavings, '仕事や収入が不安定でも考える時間を作ります。'] as const,
     ['invest-start', '少額投資スタート準備', sixMonthFund, inputs.cashSavings, '守りを固めたら、長期・分散・低コストを学び始めます。'] as const,
-    ['reduce-work', '週1日分の仕事を軽くする', oneDayWorkFreedom, totalAssets, '資産と余力で、働き方を選びやすくします。'] as const,
+    ['reduce-work', '週1日分の仕事を軽くする', oneDayWorkFreedom, totalAssets, '資産と余力があるほど、働き方の選択肢が増えます。'] as const,
     ['semi-retire', '少し働いて暮らせるライン', semiRetireTarget, totalAssets, '生活費の一部を資産で支えられる状態です。'] as const,
-    ['fire', '生活費を資産で大きく支えるライン', fireNumber, totalAssets, '完全に辞める判定ではなく、働き方をかなり選びやすい目安です。'] as const,
+    ['fire', '生活費を資産で大きく支えるライン', fireNumber, totalAssets, '完全に辞めるという意味ではなく、働き方をかなり選びやすい目安です。'] as const,
   ];
 
   let previousComplete = true;
@@ -552,7 +552,7 @@ const buildEmergencyFundPlan = (
       nextMilestoneLabel: '月の生活費を入れる',
       nextMilestoneAmount: 0,
       rangeLabel: `${minMonths}〜${maxMonths}か月分`,
-      reason: '生活費が入ると、働き方や家計リスクに合わせたレンジを出します。',
+      reason: '生活費が入ると、今の暮らしに近い貯金の幅が見えます。',
     };
   }
 
@@ -572,7 +572,7 @@ const buildEmergencyFundPlan = (
   const employmentText = inputs.employmentType === 'freelance'
     ? 'フリーランス・自営業寄りなので、収入変動に備えて厚めに見ます。'
     : inputs.employmentType === 'unstable'
-      ? '収入が揺れやすい前提なので、会社員標準より厚めに見ます。'
+      ? '収入が揺れやすいので、会社員の目安より厚めに見ます。'
       : '会社員・公務員寄りの目安として、まず3〜6か月分を基準にします。';
   const householdText = inputs.householdRisk === 'high'
     ? '子ども、単一収入、高家賃、ローンなどの重さがあるため上限寄りです。'
@@ -620,7 +620,7 @@ const buildWithdrawalSupportLines = (
     { rate: 2.5, label: '保守的な目安', note: '長期・為替・税制のブレを厚めに見ます。' },
     { rate: 3, label: '標準寄りの目安', note: 'この診断の主な参考線です。' },
     { rate: 3.5, label: 'やや攻めた目安', note: '支出調整や働く余地がある人向けの確認線です。' },
-    { rate: 4, label: '米国過去データの参考線', note: '米国過去データの参考線です。日本の税制・為替・長期リスクを完全には反映しません。' },
+    { rate: 4, label: '米国過去データの参考線', note: '米国の過去データから見た参考線です。日本の税制・為替・長期リスクとは分けて見てください。' },
   ];
 
   return lines.map((line) => {
@@ -684,7 +684,7 @@ const buildDiagnosisType = (
   if (highWorkPain && (inputs.workPain === 'high' || inputs.moneyStress === 'high')) {
     return diagnosis('rest_consult', [
       '仕事やお金のしんどさが強めに出ています。',
-      '副業や退職判断より、休息・制度確認・相談を先に置く方が安全です。',
+      '副業や退職を急ぐより、まず休息・制度確認・相談から始める方が安心です。',
     ]);
   }
 
@@ -862,7 +862,7 @@ const buildMissionTimeline = (
         id: 'week-remote-flex-talk',
         category: 'work',
         title: '今週: 在宅・時差出勤・業務量調整を相談する',
-        body: '退職より先に、今の会社の中で軽くできる選択肢を使います。',
+        body: '退職を急ぐ前に、今の会社で軽くできる余地を探します。',
         impact: '在職で負荷軽減',
         difficulty: 'normal',
       }),
@@ -908,8 +908,8 @@ const buildMissionTimeline = (
 
   if (diagnosisType === 'asset_supported_adjustment' || diagnosisType === 'semi_retire_ready') {
     const supportText = inputs.monthlyStableSideIncome > 0
-      ? `安定収入${formatCurrency(inputs.monthlyStableSideIncome)}/月も合わせて見ます。`
-      : '月5万円、月10万円の安定収入がある場合も並べて見ます。';
+      ? `安定収入${formatCurrency(inputs.monthlyStableSideIncome)}/月も、暮らしを支える力になります。`
+      : '月5万円、月10万円の安定収入がある暮らしも比べてみます。';
     return {
       today: createMission({
         id: 'today-support-check',
@@ -1072,7 +1072,7 @@ const buildImprovedFutureText = (
   monthlyGainLabel: string,
 ) => {
   const futureBalance = monthlyBalance + assumedMonthlyImprovement;
-  const futureSummary = `${futureAge}歳ごろには投資資産が約${formatCurrency(investedAssets)}。3.0%の取り崩し目安なら、生活費の一部を毎月約${monthlyGainLabel}ぶん支えられる計算です。`;
+  const futureSummary = `${futureAge}歳ごろには投資資産が約${formatCurrency(investedAssets)}。3.0%の取り崩し目安なら、生活費の一部を毎月約${monthlyGainLabel}ぶん支えられそうです。`;
 
   if (monthlyBalance < 0) {
     return `まず赤字を止めて、月${formatReadableMoney(Math.max(0, futureBalance))}残る形まで戻せると、${futureSummary}`;
@@ -1093,7 +1093,7 @@ const buildImprovedActionText = (firstMission?: Mission) => {
   const categoryText: Record<QuestCategory, string> = {
     saving: '毎月出ていくお金を少し軽くし、赤字やギリギリ感を減らしやすくなります。',
     income: '来月も見込める収入の支えを作り、生活の不安定さを減らしやすくなります。',
-    defense: '急な出費に耐える土台を作り、次の判断を落ち着いて選びやすくなります。',
+    defense: '急な出費に耐える土台ができると、次の判断を落ち着いて考えやすくなります。',
     investment: '投資や資産の使い方を、生活を壊さない範囲で考えやすくなります。',
     work: 'お金の余力を、自由時間や働き方の見直しに回す判断がしやすくなります。',
   };
@@ -1162,14 +1162,14 @@ const buildBaselineFutureText = (
 
 const buildLifeChangeHelper = (currentAge: number) => {
   if (currentAge < 40) {
-    return '年齢で変わるお金: 40歳から介護保険料が支出に増える可能性があります。金額は人によって違うので、この診断では「毎月の余力が減りやすい年齢イベント」としてだけ反映します。';
+    return '年齢で変わるお金: 40歳から介護保険料が支出に増える可能性があります。金額は人によって違うので、「毎月の余力が減りやすい節目」として見てください。';
   }
 
   if (currentAge < 65) {
-    return '年齢で変わるお金: 65歳から公的年金を受け取れる可能性があります。実際の金額は払った期間や給与で変わるので、ここでは生活の余力を見るための目安にしています。';
+    return '年齢で変わるお金: 65歳から公的年金を受け取れる可能性があります。実際の金額は払った期間や給与で変わるので、生活の余力を見る参考として扱います。';
   }
 
-  return '年齢で変わるお金: 医療費負担や介護のお金は、年齢・収入・住む場所で変わります。ここでは将来を約束せず、家計の余裕を見るための目安にしています。';
+  return '年齢で変わるお金: 医療費負担や介護のお金は、年齢・収入・住む場所で変わります。将来を約束するものではなく、家計の余裕を見る参考です。';
 };
 
 const formatReadableMoney = (value: number) => {

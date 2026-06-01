@@ -51,7 +51,7 @@ describe('DiagnosisFlow', () => {
     expect(screen.getByText(/わかるところだけで大丈夫です/)).toBeTruthy();
     expect(screen.getByText(/ここまでの入力は自動保存されます/)).toBeTruthy();
     expect(screen.getByText('次に入れるなら')).toBeTruthy();
-    expect(screen.getByText('仕事のしんどさが結果に強く効くので、働き方から')).toBeTruthy();
+    expect(screen.getByText('仕事が重いなら、働き方から')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'ここを入れる' })).toBeTruthy();
     expect(screen.getAllByText('未入力').length).toBeGreaterThan(0);
     expect(screen.getByText('働き方の重さ')).toBeTruthy();
@@ -73,7 +73,7 @@ describe('DiagnosisFlow', () => {
     fireEvent.click(screen.getByRole('button', { name: '働き方ステップを開く' }));
 
     expect(screen.getByText('働き方の重さ')).toBeTruthy();
-    expect(screen.getByText(/有給・残業整理・在宅相談など低リスクな順番/)).toBeTruthy();
+    expect(screen.getByText(/有給、残業整理、在宅相談など、負担を下げる順番/)).toBeTruthy();
     expect(screen.getByText('今の会社で軽くできそうな余地')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: '準備ステップを開く' }));

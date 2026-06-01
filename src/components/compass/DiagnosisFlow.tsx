@@ -58,7 +58,7 @@ const detailSteps: {
     id: 'money',
     title: '資産と安定収入',
     shortTitle: '資産',
-    body: '資産が生活費をどれくらい支えるかを見るために使います。',
+    body: '投資や安定した副収入がある人だけ入れれば大丈夫です。',
     icon: <WalletCards className="h-4 w-4" />,
   },
   {
@@ -72,14 +72,14 @@ const detailSteps: {
     id: 'work',
     title: '働き方の重さ',
     shortTitle: '働き方',
-    body: '退職ではなく、有給・残業整理・在宅相談など低リスクな順番を出しやすくします。',
+    body: '有給、残業整理、在宅相談など、負担を下げる順番を一緒に見ます。',
     icon: <Briefcase className="h-4 w-4" />,
   },
   {
     id: 'readiness',
     title: '不安と準備の進み具合',
     shortTitle: '準備',
-    body: '守りを優先するか、転職準備や投資学習へ進むかを選びやすくします。',
+    body: '不安の強さと準備状況に合わせて、無理のない一歩を見ます。',
     icon: <HeartPulse className="h-4 w-4" />,
   },
 ];
@@ -224,7 +224,7 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
                   <NumberField label="月の安定副収入" value={inputs.monthlyStableSideIncome} unit="万円" multiplier={10000} onChange={(value) => onChange('monthlyStableSideIncome', value)} />
                 </div>
                 <p className="rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-600 shadow-sm">
-                  生活防衛資金は、投資ではなくすぐ使える貯金を主に見ます。投資額は「生活費の一部を資産で支えられるか」の目安に使います。
+                  投資しているお金は、生活費の一部をどれくらい支えられそうかを見る目安です。生活防衛資金は、すぐ使える貯金を主に見ます。
                 </p>
               </div>
             )}
@@ -365,7 +365,7 @@ export function DiagnosisFlow({ inputs, step, onChange, onStepChange }: Diagnosi
               <div>
                 <h3 className="font-black text-slate-950">診断が出ました</h3>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  結果を見ながら、今やる一歩を1つ確認します。必要なところだけ追加すると、生活防衛資金や働き方ミッションが少し自分向けになります。
+                  結果を見ながら、今やる一歩を1つ確認します。必要なところだけ入れると、生活防衛資金や働き方の一歩が少し自分向けになります。
                 </p>
               </div>
             </div>
@@ -480,7 +480,7 @@ function buildDetailStepSummaries(inputs: CompassInputs): DetailStepSummary[] {
     {
       title: '投資や安定副収入がある人は、資産から',
       reason: hasMoney
-        ? '資産まわりは入力済みです。生活費を支える割合の見え方に反映されています。'
+        ? '資産まわりは入っています。生活費をどれくらい支えられそうかを見られます。'
         : '投資や毎月見込める副収入がなければ、ここは飛ばして大丈夫です。',
       status: hasMoney ? 'complete' : 'empty',
       statusLabel: hasMoney ? '入力済み' : '未入力',
@@ -488,24 +488,24 @@ function buildDetailStepSummaries(inputs: CompassInputs): DetailStepSummary[] {
     {
       title: '返済や自分で払う社会保険料があるなら、固定負担から',
       reason: fixedCount > 0
-        ? '返済や自分で払う社会保険料を、月の余力と生活防衛資金に反映しています。'
+        ? '返済や自分で払う社会保険料も入っています。月の余力を見直しやすくなります。'
         : '生活費にすべて含めている、または返済がなければ0円のままで大丈夫です。',
       status: fixedCount >= 2 ? 'complete' : fixedCount === 1 ? 'partial' : 'empty',
       statusLabel: fixedCount >= 2 ? '入力済み' : fixedCount === 1 ? '少し入力済み' : '未入力',
     },
     {
-      title: '仕事のしんどさが結果に強く効くので、働き方から',
+      title: '仕事が重いなら、働き方から',
       reason: workCount >= 4
-        ? '働き方はかなり入力済みです。負荷を下げる順番に反映されています。'
-        : '有給・残業整理・在宅相談など、低リスクな順番を出すために使います。',
+        ? '働き方はかなり入っています。負担を下げる順番を見やすくなります。'
+        : '有給・残業整理・在宅相談など、無理の少ない順番で考えます。',
       status: workCount >= 4 ? 'complete' : workCount > 0 ? 'partial' : 'empty',
       statusLabel: workCount >= 4 ? '入力済み' : workCount > 0 ? '少し入力済み' : '未入力',
     },
     {
       title: '不安が強いときは、準備から',
       reason: readinessCount >= 2
-        ? '不安感や準備状況を、守り優先か次の準備かの出し分けに反映しています。'
-        : 'お金の不安や転職準備の進み具合で、ミッションの優先順が変わります。',
+        ? '不安感や準備状況が入っています。守りを厚くするか、次の準備へ進むかを見やすくなります。'
+        : 'お金の不安や転職準備の進み具合で、今やる一歩が変わります。',
       status: readinessCount >= 2 ? 'complete' : readinessCount === 1 ? 'partial' : 'empty',
       statusLabel: readinessCount >= 2 ? '入力済み' : readinessCount === 1 ? '少し入力済み' : '未入力',
     },

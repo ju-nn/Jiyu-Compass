@@ -325,6 +325,8 @@ function CompassOverview({ result }: { result: CompassResult }) {
         </div>
       </div>
 
+      <CompassSignalCards result={result} />
+
       <div className="grid gap-3 md:grid-cols-3">
         <GaugeCard
           title="生活防衛資金"
@@ -355,6 +357,73 @@ function CompassOverview({ result }: { result: CompassResult }) {
   );
 }
 
+function CompassSignalCards({ result }: { result: CompassResult }) {
+  const { strengths, cautions } = buildCompassSignals(result);
+
+  return (
+    <section className="grid gap-3 md:grid-cols-2">
+      <div className="rounded-lg border border-emerald-100 bg-emerald-50/70 p-4">
+        <p className="text-xs font-black text-emerald-700">いま強いポイント</p>
+        <div className="mt-3 grid gap-2">
+          {strengths.map((item) => (
+            <p key={item} className="rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-700 shadow-sm">
+              {item}
+            </p>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
+        <p className="text-xs font-black text-amber-800">注意したいポイント</p>
+        <div className="mt-3 grid gap-2">
+          {cautions.map((item) => (
+            <p key={item} className="rounded-lg bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-700 shadow-sm">
+              {item}
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function buildCompassSignals(result: CompassResult) {
+  const supportLine = result.withdrawalSupport.find((line) => line.rate === 3) ?? result.withdrawalSupport[0];
+  const strengths = [
+    result.monthlyBalance >= 10000
+      ? `毎月${formatCurrency(result.monthlyBalance)}の余力があります。`
+      : null,
+    result.emergencyFundPlan.progressToMin >= 100
+      ? `生活防衛資金は下限レンジの${result.emergencyFundPlan.minMonths}か月分に届いています。`
+      : null,
+    supportLine.coveragePercent >= 10
+      ? `3.0%目安で、資産が生活費の約${Math.round(supportLine.coveragePercent)}%を支えます。`
+      : null,
+    result.inputSummary.workPain === 'low'
+      ? '仕事のしんどさは低めに入力されています。'
+      : null,
+  ].filter(Boolean) as string[];
+
+  const cautions = [
+    result.monthlyBalance < 0
+      ? `月${formatCurrency(Math.abs(result.monthlyBalance))}の赤字を先に止めたい状態です。`
+      : null,
+    result.emergencyFundPlan.progressToMin < 100
+      ? `生活防衛資金は${result.emergencyFundPlan.rangeLabel}が目安です。次は${result.emergencyFundPlan.nextMilestoneLabel}です。`
+      : null,
+    result.inputSummary.workPain === 'high'
+      ? 'しんどさが強い時期は、副業や退職判断より休息・制度確認・相談を先に置きます。'
+      : null,
+    supportLine.coveragePercent < 10
+      ? '資産カバー率はまだ小さめです。投資より、現金の守りと固定費整理を優先しやすい段階です。'
+      : null,
+  ].filter(Boolean) as string[];
+
+  return {
+    strengths: (strengths.length > 0 ? strengths : ['入力した数字から、生活費・貯金・働き方を同じ画面で見られる状態です。']).slice(0, 3),
+    cautions: (cautions.length > 0 ? cautions : ['数字は目安です。退職・投資・税務の判断は個別事情を確認しながら進めてください。']).slice(0, 3),
+  };
+}
+
 function WithdrawalSupportCards({ result }: { result: CompassResult }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -363,7 +432,7 @@ function WithdrawalSupportCards({ result }: { result: CompassResult }) {
           <p className="text-xs font-black text-emerald-700">セミリタイア距離メーター</p>
           <h3 className="text-base font-black text-slate-950">資産が生活費の何%を支えるか</h3>
           <p className="mt-1 text-xs leading-5 text-slate-500">
-            「もう働かなくてよい」という判定ではなく、生活費の一部を資産で補える目安です。iDeCoなど原則60歳まで使えない資産を含めている場合は、別管理で見てください。
+            「もう働かなくてよい」という意味ではなく、生活費の一部を資産で補える目安です。iDeCoなど原則60歳まで使えない資産を含めている場合は、別管理で見てください。
           </p>
         </div>
         <Compass className="mt-1 h-5 w-5 shrink-0 text-emerald-700" />
@@ -430,7 +499,7 @@ function getDiagnosisIcon(icon: string) {
 
 function getWorkLightnessBody(result: CompassResult) {
   if (result.diagnosisType.id === 'rest_consult') {
-    return 'しんどさが強い時期は、副業や独立より、休息・相談・制度確認を先に置きます。';
+    return 'しんどさが強い時期は、まず休む時間を取り、相談先や使える制度を確認しましょう。';
   }
 
   if (result.diagnosisType.id === 'in_job_relief') {
@@ -438,7 +507,7 @@ function getWorkLightnessBody(result: CompassResult) {
   }
 
   if (result.diagnosisType.id === 'career_prepare') {
-    return '退職前に求人保存や職務経歴書の準備を進めると、焦らず選びやすくなります。';
+    return '求人保存や職務経歴書の準備を少し進めておくと、急いで決めずに済みます。';
   }
 
   if (result.diagnosisType.id === 'asset_supported_adjustment' || result.diagnosisType.id === 'semi_retire_ready') {
@@ -612,7 +681,7 @@ export function DiagnosisScopeNote() {
           <h3 className="font-black text-slate-950">この診断でわからないこと</h3>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             将来の収入、税金、投資の値動き、医療費、どの道具やサービスを選ぶべきかはわかりません。
-            40歳から<TermHelp term="介護保険料" />が始まることや、65歳から<TermHelp term="公的年金" />を受け取れることなど、年齢で変わることはあります。ただし、金額は人によって違います。投資で増える計算は、投資しているお金だけに使います。将来の結果は約束できません。
+            40歳から<TermHelp term="介護保険料" />が始まることや、65歳から<TermHelp term="公的年金" />を受け取れることなど、年齢で変わることはあります。ただし、金額は人によって違います。投資の目安は、投資しているお金だけで見ます。将来の結果は約束できません。
           </p>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 md:col-span-2">
@@ -640,7 +709,7 @@ export function ResultSummary({ result }: { result: CompassResult }) {
           <h2 className="text-2xl font-black leading-tight text-slate-950">{result.headline}</h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">
             今の優先テーマは「{result.lifeStage.priorityTheme}」。まずは
-            {result.lifeStage.stageName} を進めて、働き方を選びやすくします。
+            {result.lifeStage.stageName} を少し進めると、働き方を選ぶ余地が広がります。
           </p>
         </div>
         <div className="grid min-w-[280px] gap-3 sm:grid-cols-3 xl:max-w-xl">
@@ -692,7 +761,7 @@ export function DetailMetrics({ result }: { result: CompassResult }) {
       <Metric
         label="月の返済・保険料"
         value={formatCurrency(result.monthlyObligations)}
-        helper="入力した返済・保険料の月合計"
+        helper="返済・保険料として入れた月合計"
         tone={result.monthlyObligations > 0 ? 'warn' : 'neutral'}
       />
       <Metric
@@ -735,7 +804,7 @@ export function LifeStatusPanel({ result }: { result: CompassResult }) {
       </div>
       {result.inputSummary.workPain === '' && (
         <p className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs leading-5 text-slate-500">
-          仕事のしんどさは未入力なので、働き方の提案は控えめにしています。詳しく入れると、有給・在宅・転職準備など、働き方を軽くする一手に反映します。
+          仕事のしんどさを入れると、有給・在宅・転職準備など、負担を軽くする一歩を考えやすくなります。
         </p>
       )}
     </section>
@@ -808,7 +877,7 @@ function getEmergencyFundBody(months: number): string {
 
 function getSavingsRateBody(savingsRate: number, monthlyBalance: number): string {
   if (savingsRate >= 20) {
-    return `月に${formatCurrency(monthlyBalance)}残るので、1年では約${formatCurrency(monthlyBalance * 12)}を貯金や投資、働き方の見直しに回せる計算です。`;
+    return `月に${formatCurrency(monthlyBalance)}残るので、1年では約${formatCurrency(monthlyBalance * 12)}を貯金や投資、働き方の見直しに回せそうです。`;
   }
 
   if (savingsRate >= 10) {
@@ -819,7 +888,7 @@ function getSavingsRateBody(savingsRate: number, monthlyBalance: number): string
     return `月に${formatCurrency(monthlyBalance)}の黒字なので、1年では約${formatCurrency(monthlyBalance * 12)}の余力です。固定費や大きな支出を少し動かすと、数字が変わりやすい状態です。`;
   }
 
-  return `月に${formatCurrency(Math.abs(monthlyBalance))}の赤字なので、このペースだと1年で約${formatCurrency(Math.abs(monthlyBalance) * 12)}不足する計算です。まずは赤字の原因を見つけたい数字です。`;
+  return `月に${formatCurrency(Math.abs(monthlyBalance))}の赤字なので、このペースだと1年で約${formatCurrency(Math.abs(monthlyBalance) * 12)}不足します。まずは赤字の原因を見つけたい数字です。`;
 }
 
 function PensionEstimateCard({ result }: { result: CompassResult }) {
@@ -881,7 +950,7 @@ function CurrentStatusBreakdown({ result }: { result: CompassResult }) {
         <StatusReadout
           label="資産カバー距離"
           value={`${result.fireProgress.toFixed(1)}%`}
-          body={result.yearsToFire === null ? '今のペースでは、何年で届くか出しにくい状態です。' : `${result.achievableFireAge}歳ごろに資産が生活費を大きく支える目安です。`}
+          body={result.yearsToFire === null ? '今のペースでは、まだ見通しが立てにくい状態です。' : `${result.achievableFireAge}歳ごろに、資産が生活費を大きく支える目安です。`}
         />
         <StatusReadout
           label="毎月決まって出るお金"
@@ -952,7 +1021,7 @@ export function ProjectionChart({ result }: { result: CompassResult }) {
       age: 60,
       label: '年金保険料終了',
       shortLabel: '60歳 年金保険料終了',
-      body: '自分で払う年金保険料を入力している場合、60歳以降は支出から外す目安にしています。',
+      body: '自分で払う年金保険料がある場合、60歳以降は支出が軽くなる可能性があります。',
       color: '#16a34a',
       bg: 'bg-emerald-50',
       text: 'text-emerald-800',
@@ -974,7 +1043,7 @@ export function ProjectionChart({ result }: { result: CompassResult }) {
       age: 70,
       label: '医療費負担',
       shortLabel: '70歳 医療費',
-      body: '医療費負担が変わり始める年齢です。金額差は人によって違うため、制度メモとして表示します。',
+      body: '医療費負担が変わり始める年齢です。金額差は人によって違うため、参考として見てください。',
       color: '#7c3aed',
       bg: 'bg-violet-50',
       text: 'text-violet-800',
@@ -1189,7 +1258,7 @@ export function InvestmentNote() {
           <p className="mt-2 text-sm leading-6 text-slate-600">
             急な出費にそなえるお金は、すぐ使える貯金だけで見ます。その貯金が足りない間は、投資より貯金を優先します。
             投資を始めるなら、NISAなどを調べながら、長く続ける・いろいろ分ける・手数料を低くする、という考え方を大事にしてください。
-            投資で増える計算は、投資しているお金だけに使います。このアプリは、特定の投資先をすすめたり、利益を約束したりしません。
+            投資の目安は、投資しているお金だけで見ます。このアプリは、特定の投資先をすすめたり、利益を約束したりしません。
             同じ年代とのくらべ方は、正確な順位ではなく、だいたいの位置です。
           </p>
         </div>
@@ -1342,6 +1411,8 @@ function ExpenseCutSimulator({ result }: { result: CompassResult }) {
         </div>
       </div>
 
+      <FixedCostActionPlan />
+
       <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
         <div className="grid gap-3 md:grid-cols-2">
           <CutInput label="スマホ代" value={cuts.phone} onChange={(value) => updateCut('phone', value)} />
@@ -1364,6 +1435,50 @@ function ExpenseCutSimulator({ result }: { result: CompassResult }) {
             この削減が続くと、1年で{formatCurrency(annualImpact)}ぶん自由に使えるお金が増えます。まずは1項目だけでも十分です。
           </p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function FixedCostActionPlan() {
+  const items = [
+    {
+      label: '今日',
+      title: '小さく止める',
+      body: '使っていないサブスクを1つ止める、通信オプションを1つ確認する。',
+      icon: <CheckCircle2 className="h-4 w-4" />,
+    },
+    {
+      label: '今週',
+      title: '一覧にする',
+      body: '通信費、保険料、サブスク、光熱費、ローンを月額で並べる。',
+      icon: <CalendarDays className="h-4 w-4" />,
+    },
+    {
+      label: '今月',
+      title: '大きく効く項目を見る',
+      body: '住居費、保険、車、住宅ローン、返済計画を落ち着いて点検する。',
+      icon: <Map className="h-4 w-4" />,
+    },
+  ];
+
+  return (
+    <section className="mb-5 rounded-lg border border-emerald-100 bg-emerald-50/70 p-4">
+      <div className="mb-3">
+        <p className="text-xs font-black text-emerald-700">固定費の順番</p>
+        <h4 className="text-base font-black text-slate-950">小さく始めて、大きく効く項目は今月見る</h4>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-lg border border-white bg-white p-3 shadow-sm">
+            <div className="mb-2 inline-flex items-center gap-2 rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-700">
+              {item.icon}
+              {item.label}
+            </div>
+            <p className="text-sm font-black text-slate-950">{item.title}</p>
+            <p className="mt-2 text-xs leading-5 text-slate-600">{item.body}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -1618,7 +1733,7 @@ function GaugeCard({
 const TERM_HELP: Record<string, { title: string; body: string }> = {
   '急な出費にそなえる貯金': {
     title: '急な出費にそなえる貯金とは',
-    body: '病気、引っ越し、家電の故障、収入の一時的な減少などに備える、すぐ使える貯金です。この診断では投資しているお金を含めません。',
+    body: '病気、引っ越し、家電の故障、収入の一時的な減少などに備える、すぐ使える貯金です。投資しているお金は含めずに見ます。',
   },
   '貯蓄率': {
     title: '貯蓄率とは',
@@ -1630,7 +1745,7 @@ const TERM_HELP: Record<string, { title: string; body: string }> = {
   },
   '取り崩し率': {
     title: '取り崩し率とは',
-    body: '資産から毎年いくら生活費へ回すかの参考率です。この診断では2.5%、3.0%、3.5%を中心に見て、4.0%は米国過去データの参考線として扱います。',
+    body: '資産から毎年いくら生活費へ回すかの参考率です。2.5%、3.0%、3.5%を中心に見て、4.0%は米国過去データの参考線として扱います。',
   },
   'NISA': {
     title: 'NISAとは',
@@ -1650,7 +1765,7 @@ const TERM_HELP: Record<string, { title: string; body: string }> = {
   },
   '医療費負担': {
     title: '医療費負担とは',
-    body: '病院や薬局で支払う自己負担のことです。年齢や所得で割合が変わるため、この診断では制度メモとして扱います。',
+    body: '病院や薬局で支払う自己負担のことです。年齢や所得で割合が変わるため、参考として扱います。',
   },
   '後期高齢者医療制度': {
     title: '後期高齢者医療制度とは',
