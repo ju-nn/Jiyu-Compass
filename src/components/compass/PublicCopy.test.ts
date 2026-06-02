@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 const root = process.cwd();
 const publicFiles = [
   'index.html',
+  'public/manifest.json',
+  'vite.config.ts',
   'src/App.tsx',
   'src/components/compass/DiagnosisFlow.tsx',
   'src/components/compass/ResultSections.tsx',
@@ -63,5 +65,16 @@ describe('public release copy', () => {
     expect(publicText).not.toContain('危険');
     expect(publicText).not.toContain('今すぐ辞め');
     expect(publicText).not.toContain('長期の自由ライン');
+  });
+
+  it('リリース用のメタ情報とPWAアイコンを公開ファイルに含める', () => {
+    expect(publicText).toContain('働き方を軽くするための生活コンパス診断');
+    expect(publicText).toContain('https://ju-nn.github.io/Jiyu-Compass/ogp-thumbnail.png');
+    expect(publicText).toContain('pwa-192x192.png');
+    expect(publicText).toContain('pwa-512x512.png');
+    expect(publicText).toContain('<meta name="robots" content="index,follow" />');
+    expect(publicText).toContain("lang: 'ja'");
+    expect(publicText).not.toContain('apple-touch-icon.png');
+    expect(publicText).not.toContain('masked-icon.svg');
   });
 });
